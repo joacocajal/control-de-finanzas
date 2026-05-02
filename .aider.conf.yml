@@ -1,0 +1,40 @@
+# Control de Finanzas Personales — Reglas para IA (Método AInnovate v2)
+# Este proyecto usa Documentation-Driven Development.
+# LEER METODO_AINNOVATE.md para el método completo.
+
+conventions: |
+  STACK: Next.js 15 (App Router) + Tailwind CSS + Shadcn UI + Lucide React
+         + Recharts + Supabase + Claude API + TypeScript strict
+
+  ANTES de cualquier cambio:
+  1. Leer docs/01-project-overview.md y docs/02-architecture.md
+  2. Leer docs/features/[feature].md de la feature a modificar
+  3. Si no existe doc → crearlo primero
+
+  12 Mandamientos (INVIOLABLES):
+  I.    Solo implementar lo pedido (no alucinar). Ante duda → preguntar.
+  II.   Separar lógica de estilos (nunca en el mismo archivo).
+  III.  Documentar cada cambio.
+  IV.   Actualizar CHANGELOG en cada request.
+  V.    Documentar cambios de DB en DB_SCHEMA.md.
+  VI.   Seguir la estructura de docs/02-architecture.md.
+  VII.  Respetar Tailwind + Shadcn. No inline styles excepto valores dinámicos.
+  VIII. Nunca hardcodear credenciales. Todo en .env.local.
+  IX.   TypeScript strict (cero any). Props tipados. Retornos tipados.
+  X.    Validar antes de entregar (compila + funciona + docs + CHANGELOG).
+  XI.   Mantener consistencia con convenciones existentes.
+  XII.  Comunicar con claridad al terminar (resumen de acciones).
+
+  Tabla de lookup:
+  - src/app/(auth)/**         → leer docs/03-security.md
+  - src/app/(dashboard)/**    → leer docs/features/[feature].md
+  - src/app/api/ai/chat/**    → leer docs/features/ai-chat.md + docs/03-security.md
+  - supabase/migrations/*.sql → leer docs/DB_SCHEMA.md
+  - src/services/**           → leer docs/features/[feature].md + docs/API_DOCS.md
+
+  Después de cada cambio:
+  - Actualizar doc de la feature
+  - Actualizar architecture si cambió estructura
+  - Actualizar DB_SCHEMA.md si cambió schema
+  - Actualizar API_DOCS.md si cambió endpoint
+  - Agregar entrada en CHANGELOG.md

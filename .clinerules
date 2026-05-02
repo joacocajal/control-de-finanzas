@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════════════════════════
+# CONTROL DE FINANZAS PERSONALES — REGLAS PARA IA (Método AInnovate v2)
+# ═══════════════════════════════════════════════════════════════
+#
+# ATENCIÓN IA: Este proyecto usa Documentation-Driven Development.
+# ANTES de escribir CUALQUIER línea de código, DEBES:
+#
+# 1. LEER docs/01-project-overview.md (visión, stack, estado)
+# 2. LEER docs/02-architecture.md (estructura, carpetas, convenciones)
+# 3. IDENTIFICAR qué feature se va a modificar
+# 4. LEER el doc de esa feature en docs/features/[feature].md
+# 5. Si NO existe doc para la feature → CREARLO ANTES de codear
+#
+# Si vas a tocar la base de datos → LEER docs/DB_SCHEMA.md
+# Si vas a tocar endpoints/API → LEER docs/API_DOCS.md
+# Si vas a tocar seguridad/auth → LEER docs/03-security.md
+#
+# Documento completo del método: METODO_AINNOVATE.md (raíz del proyecto)
+#
+# ═══════════════════════════════════════════════════════════════
+
+# STACK: Next.js 15 (App Router) + Tailwind CSS + Shadcn UI + Lucide React
+#        + Recharts + Supabase + Claude API + TypeScript strict
+
+# ─── 12 MANDAMIENTOS (INVIOLABLES) ───
+# I.   Solo implementar lo pedido. Ante duda → PREGUNTAR.
+# II.  Lógica y estilos NUNCA en el mismo archivo.
+# III. Ningún cambio sin documentación.
+# IV.  CHANGELOG obligatorio en cada request.
+# V.   DB_SCHEMA.md se actualiza con cada cambio de schema.
+# VI.  Seguir la estructura de docs/02-architecture.md.
+# VII. Respetar Tailwind + Shadcn. No inline styles (excepto valores dinámicos).
+# VIII. Nada hardcodeado. Todo en .env.local.
+# IX.  TypeScript strict. Cero `any`. Props tipados. Retornos tipados.
+# X.   Verificar: compila + funciona + docs actualizados + CHANGELOG.
+# XI.  Seguir convenciones existentes del proyecto.
+# XII. Dar resumen de acciones al terminar.
+
+# ─── TABLA DE LOOKUP ───
+# src/app/(auth)/**          → docs/03-security.md
+# src/app/(dashboard)/**     → docs/features/[feature].md
+# src/app/api/ai/chat/**     → docs/features/ai-chat.md + docs/03-security.md
+# supabase/migrations/*.sql  → docs/DB_SCHEMA.md
+# src/services/**            → docs/features/[feature].md + docs/API_DOCS.md

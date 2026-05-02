@@ -1,0 +1,76 @@
+# Control de Finanzas Personales — Reglas para IA (Método AInnovate v2)
+
+> **ATENCIÓN IA:** Este proyecto usa Documentation-Driven Development.
+> **ANTES** de escribir CUALQUIER línea de código, DEBES leer los docs relevantes.
+> Documento completo del método: `METODO_AINNOVATE.md` (raíz del proyecto)
+
+## Protocolo Obligatorio (antes de cada cambio)
+1. LEER `docs/01-project-overview.md`
+2. LEER `docs/02-architecture.md`
+3. IDENTIFICAR qué feature se modifica
+4. LEER `docs/features/[feature].md`
+5. Si NO existe doc para la feature → CREARLO antes de codear
+6. Si se toca DB → LEER `docs/DB_SCHEMA.md`
+7. Si se toca API → LEER `docs/API_DOCS.md`
+8. Si se toca auth/seguridad → LEER `docs/03-security.md`
+
+## Los 12 Mandamientos del Vibe Coding (INVIOLABLES)
+| # | Mandamiento | Regla |
+|---|-------------|-------|
+| I | NO ALUCINARÁS | Solo implementar exactamente lo pedido. Ante duda → PREGUNTAR |
+| II | SEPARARÁS LÓGICA DE ESTILOS | Nunca mezclar en el mismo archivo |
+| III | DOCUMENTARÁS CADA CAMBIO | Ningún cambio sin su doc correspondiente |
+| IV | ACTUALIZARÁS EL CHANGELOG | Cada request → nueva entrada |
+| V | DOCUMENTARÁS LA DB | Cada cambio de schema → DB_SCHEMA.md |
+| VI | SEGUIRÁS LA ESTRUCTURA | No crear archivos fuera de la estructura |
+| VII | USARÁS EL SISTEMA DE ESTILOS | Respetar el design system de Tailwind |
+| VIII | PROTEGERÁS CREDENCIALES | Nada hardcodeado, todo en .env |
+| IX | TIPARÁS TODO | TypeScript estricto, cero `any` |
+| X | VALIDARÁS ANTES DE ENTREGAR | Checklist obligatorio |
+| XI | MANTENDRÁS CONSISTENCIA | Seguir convenciones existentes |
+| XII | COMUNICARÁS CON CLARIDAD | Resumen de acciones al terminar |
+
+## 4 Leyes de Operación
+1. **LEER ANTES DE ACTUAR** — Consultar docs antes de cualquier cambio
+2. **NO ROMPER LO QUE FUNCIONA** — Detenerse si hay conflicto con la arquitectura
+3. **DOCUMENTACIÓN CONTINUA** — Actualizar docs + CHANGELOG después de cada cambio
+4. **SEGURIDAD** — Nunca deploy/push/cambios destructivos sin confirmación
+
+## Documentación del Proyecto
+| Doc | Cuándo leerlo |
+|-----|--------------|
+| `docs/01-project-overview.md` | SIEMPRE (visión, stack, estado) |
+| `docs/02-architecture.md` | SIEMPRE (estructura, convenciones) |
+| `docs/03-security.md` | Si se toca auth, credenciales, RLS |
+| `docs/04-deployment.md` | Si se toca deploy, CI/CD |
+| `docs/DB_SCHEMA.md` | Si se toca base de datos |
+| `docs/API_DOCS.md` | Si se toca endpoints/API |
+| `docs/SKILLS.md` | ANTES de implementar cualquier feature nueva |
+| `docs/features/*.md` | El doc de la feature que se modifica |
+
+## Stack del Proyecto
+- **Framework:** Next.js 15 (App Router)
+- **Estilos:** Tailwind CSS + Shadcn UI
+- **Iconos:** Lucide React
+- **Gráficos:** Recharts
+- **DB + Auth:** Supabase
+- **IA:** Claude API (Anthropic)
+- **Lenguaje:** TypeScript strict
+
+## Tabla de Lookup
+| Archivo que se modifica | Doc que se debe leer |
+|------------------------|---------------------|
+| `src/app/(auth)/**` | `docs/03-security.md` |
+| `src/app/(dashboard)/page.tsx` | `docs/features/transactions.md` |
+| `src/app/(dashboard)/chat/page.tsx` | `docs/features/transactions.md` |
+| `src/app/api/ai/chat/route.ts` | `docs/features/transactions.md` + `docs/03-security.md` |
+| `supabase/migrations/*.sql` | `docs/DB_SCHEMA.md` |
+| `src/services/transaction.service.ts` | `docs/features/transactions.md` + `docs/DB_SCHEMA.md` |
+| `src/services/category.service.ts` | `docs/features/transactions.md` + `docs/DB_SCHEMA.md` |
+| `src/services/ai.service.ts` | `docs/features/transactions.md` + `docs/API_DOCS.md` |
+| `src/components/features/transactions/**` | `docs/features/transactions.md` |
+| `src/components/features/charts/**` | `docs/features/transactions.md` |
+| `src/components/features/ai-chat/**` | `docs/features/transactions.md` |
+| `src/components/layout/Sidebar.tsx` | `docs/02-architecture.md` |
+| `src/lib/utils/**` | `docs/02-architecture.md` |
+| `src/hooks/**` | `docs/features/transactions.md` |
