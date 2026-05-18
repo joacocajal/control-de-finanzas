@@ -1,0 +1,153 @@
+{
+  "name": "Control de Finanzas — Resumen Semanal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [1],
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "trigger-weekly",
+      "name": "Trigger Semanal (Lunes 9am)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.APP_URL }}/api/summary",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.SUMMARY_API_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-data",
+      "name": "Obtener Datos Financieros",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Formateá los datos del mes para el prompt\nconst data = $input.first().json;\n\nconst balance = data.balance ?? 0;\nconst income = data.totalIncome ?? 0;\nconst expenses = data.totalExpenses ?? 0;\nconst categories = (data.topCategories ?? []).slice(0, 5);\n\nconst today = new Date();\nconst weekStart = new Date(today);\nweekStart.setDate(today.getDate() - 7);\nconst dateRange = `${weekStart.toLocaleDateString('es-AR')} al ${today.toLocaleDateString('es-AR')}`;\n\nconst catText = categories.map(c => `  • ${c.name}: $${c.amount.toLocaleString('es-AR')} (${c.percentage.toFixed(1)}%)`).join('\\n');\n\nconst prompt = `Generá un resumen financiero semanal conciso para el usuario. Fecha: ${dateRange}.\n\nDATOS DEL MES:\n• Balance: $${balance.toLocaleString('es-AR')}\n• Ingresos: $${income.toLocaleString('es-AR')}\n• Gastos: $${expenses.toLocaleString('es-AR')}\n• Top categorías:\\n${catText || '  (sin datos)'}\n\nEl resumen debe tener:\n1. Estado actual en una línea\n2. 2-3 observaciones clave con números\n3. 1 acción concreta para esta semana\n\nFormato: texto plano, máximo 150 palabras, español rioplatense.`;\n\nreturn [{ json: { prompt, balance, income, expenses, dateRange } }];"
+      },
+      "id": "build-prompt",
+      "name": "Armar Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [{ \"text\": \"{{ $json.prompt }}\" }]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.5,\n    \"maxOutputTokens\": 400\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "gemini-analysis",
+      "name": "Análisis Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResponse = $input.first().json;\nconst summary = geminiResponse?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No se pudo generar el resumen.';\nconst buildData = $('Armar Prompt').first().json;\n\nconst html = `\n<h2 style=\"color:#6366f1;font-family:sans-serif\">💰 Resumen Financiero Semanal</h2>\n<p style=\"color:#6b7280;font-family:sans-serif;font-size:14px\">${buildData.dateRange}</p>\n\n<table style=\"border-collapse:collapse;width:100%;margin:16px 0;font-family:sans-serif\">\n  <tr>\n    <td style=\"padding:8px 12px;background:#f3f4f6;border-radius:8px\"><strong>Balance</strong></td>\n    <td style=\"padding:8px 12px;text-align:right;color:${buildData.balance >= 0 ? '#10b981' : '#ef4444'}\">\n      $${buildData.balance.toLocaleString('es-AR')}\n    </td>\n  </tr>\n  <tr>\n    <td style=\"padding:8px 12px\"><strong>Ingresos</strong></td>\n    <td style=\"padding:8px 12px;text-align:right;color:#10b981\">$${buildData.income.toLocaleString('es-AR')}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:8px 12px;background:#f3f4f6\"><strong>Gastos</strong></td>\n    <td style=\"padding:8px 12px;text-align:right;color:#ef4444;background:#f3f4f6\">$${buildData.expenses.toLocaleString('es-AR')}</td>\n  </tr>\n</table>\n\n<h3 style=\"font-family:sans-serif;color:#1f2937\">📊 Análisis AXON</h3>\n<p style=\"font-family:sans-serif;color:#374151;line-height:1.6;white-space:pre-wrap\">${summary}</p>\n\n<hr style=\"border:none;border-top:1px solid #e5e7eb;margin:24px 0\">\n<p style=\"font-family:sans-serif;color:#9ca3af;font-size:12px\">Generado automáticamente por Control de Finanzas · n8n</p>\n`;\n\nreturn [{ json: { subject: `💰 Resumen financiero — ${buildData.dateRange}`, html, summary } }];"
+      },
+      "id": "format-email",
+      "name": "Formatear Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.FROM_EMAIL }}",
+        "toEmail": "={{ $env.TO_EMAIL }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Enviar Resumen por Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Trigger Semanal (Lunes 9am)": {
+      "main": [[{ "node": "Obtener Datos Financieros", "type": "main", "index": 0 }]]
+    },
+    "Obtener Datos Financieros": {
+      "main": [[{ "node": "Armar Prompt", "type": "main", "index": 0 }]]
+    },
+    "Armar Prompt": {
+      "main": [[{ "node": "Análisis Gemini", "type": "main", "index": 0 }]]
+    },
+    "Análisis Gemini": {
+      "main": [[{ "node": "Formatear Email", "type": "main", "index": 0 }]]
+    },
+    "Formatear Email": {
+      "main": [[{ "node": "Enviar Resumen por Email", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "instanceId": "control-de-finanzas"
+  },
+  "tags": ["finanzas", "semanal", "gemini"],
+  "_readme": {
+    "descripcion": "Workflow semanal que obtiene los datos financieros del mes, los analiza con Gemini 2.5 Flash (AXON), y envía un resumen por email cada lunes a las 9am.",
+    "variables_requeridas": {
+      "APP_URL": "URL de tu app (ej: https://control-de-finanzas.vercel.app)",
+      "SUMMARY_API_KEY": "API key para el endpoint /api/summary (crear en .env.local)",
+      "GEMINI_API_KEY": "Tu Google Gemini API key",
+      "FROM_EMAIL": "Email remitente",
+      "TO_EMAIL": "Tu email para recibir el resumen"
+    },
+    "pasos": [
+      "1. Importar este JSON en n8n: Settings → Import from file",
+      "2. Configurar las variables de entorno en n8n o hardcodear valores en cada nodo",
+      "3. Crear el endpoint /api/summary en Next.js que devuelva { balance, totalIncome, totalExpenses, topCategories }",
+      "4. Configurar credenciales SMTP en el nodo 'Enviar Resumen por Email'",
+      "5. Activar el workflow"
+    ]
+  }
+}

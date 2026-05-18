@@ -2,7 +2,6 @@
 
 import { Wallet, TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/formatters'
-import { cn } from '@/lib/utils'
 
 interface BalanceCardProps {
   type: 'balance' | 'income' | 'expense'
@@ -14,78 +13,59 @@ const CONFIG = {
     label: 'Balance Total',
     sublabel: 'Este mes',
     Icon: Wallet,
-    cardClass: 'border-indigo-500/10',
-    iconBg: 'bg-indigo-500/10',
-    iconColor: 'text-indigo-400',
-    amountColor: (n: number) => (n < 0 ? 'text-rose-300' : 'text-white'),
-    orb: 'bg-indigo-600/10',
-    glow: 'shadow-indigo-500/5',
+    color: '#e7ecf3',
+    amountColor: (n: number) => (n < 0 ? '#f87171' : '#e7ecf3'),
   },
   income: {
     label: 'Ingresos',
     sublabel: 'Este mes',
     Icon: TrendingUp,
-    cardClass: 'border-emerald-500/10',
-    iconBg: 'bg-emerald-500/10',
-    iconColor: 'text-emerald-400',
-    amountColor: () => 'text-emerald-300',
-    orb: 'bg-emerald-600/10',
-    glow: 'shadow-emerald-500/5',
+    color: '#34d399',
+    amountColor: () => '#34d399',
   },
   expense: {
     label: 'Gastos',
     sublabel: 'Este mes',
     Icon: TrendingDown,
-    cardClass: 'border-rose-500/10',
-    iconBg: 'bg-rose-500/10',
-    iconColor: 'text-rose-400',
-    amountColor: () => 'text-rose-300',
-    orb: 'bg-rose-600/10',
-    glow: 'shadow-rose-500/5',
+    color: '#f87171',
+    amountColor: () => '#f87171',
   },
 }
 
 export function BalanceCard({ type, amount }: BalanceCardProps) {
-  const { label, sublabel, Icon, cardClass, iconBg, iconColor, amountColor, orb, glow } =
-    CONFIG[type]
+  const { label, sublabel, Icon, color, amountColor } = CONFIG[type]
 
   return (
     <div
-      className={cn(
-        'relative overflow-hidden rounded-2xl border bg-gray-900 p-6',
-        'shadow-xl transition-all duration-200 hover:border-opacity-30 hover:shadow-2xl',
-        cardClass,
-        glow
-      )}
+      className="glass lift relative overflow-hidden p-5"
+      style={{ borderRadius: 18 }}
     >
-      {/* Decorative orb */}
       <div
-        className={cn(
-          'pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full blur-2xl opacity-60',
-          orb
-        )}
+        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full blur-2xl"
+        style={{ background: `${color}0d` }}
       />
 
-      {/* Icon */}
-      <div className={cn('mb-4 inline-flex rounded-xl p-2.5', iconBg)}>
-        <Icon size={18} className={iconColor} strokeWidth={2} />
+      <div className="flex items-start justify-between mb-3">
+        <div
+          className="inline-flex rounded-xl p-2.5"
+          style={{ background: `${color}14`, color }}
+        >
+          <Icon size={17} strokeWidth={2} />
+        </div>
+        <div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>
+          {sublabel}
+        </div>
       </div>
 
-      {/* Label */}
-      <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">{label}</p>
-
-      {/* Amount */}
-      <p
-        className={cn(
-          'mt-1.5 text-3xl font-bold tracking-tight tabular-nums leading-none',
-          amountColor(amount)
-        )}
+      <div className="text-[10px] num uppercase tracking-[0.18em] mb-1.5" style={{ color: 'var(--text-2)' }}>
+        {label}
+      </div>
+      <div
+        className="text-[26px] font-bold tracking-tight num leading-none"
+        style={{ color: amountColor(amount) }}
       >
         {formatCurrency(amount)}
-      </p>
-
-      {/* Sublabel */}
-      <p className="mt-3 text-xs text-gray-600">{sublabel}</p>
+      </div>
     </div>
   )
 }

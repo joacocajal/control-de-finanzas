@@ -2,27 +2,39 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, LogOut, TrendingUp, Sparkles } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Wallet,
+  Dumbbell,
+  BookOpen,
+  Sparkles,
+  Mountain,
+  X,
+  LogOut,
+  BookHeart,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+const NAV = [
+  { href: '/', label: 'Dashboard', Icon: LayoutDashboard, accent: '#e7ecf3', exact: true },
+  { href: '/finanzas', label: 'Finances', Icon: Wallet, accent: '#34d399', exact: false },
+  { href: '/fitness', label: 'Fitness', Icon: Dumbbell, accent: '#8b5cf6', exact: false },
+  { href: '/aprendizaje', label: 'Learning Hub', Icon: BookOpen, accent: '#f97316', exact: false },
+  { href: '/diario', label: 'Diario', Icon: BookHeart, accent: '#818cf8', exact: false },
+  { href: '/chat', label: 'AI Agent Arena', Icon: Sparkles, accent: '#38bdf8', exact: false },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  open?: boolean
+  onClose?: () => void
+  level?: number
+  email?: string | null
+}
+
+export function Sidebar({ open = false, onClose, level = 1, email }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [email, setEmail] = useState<string | null>(null)
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null)
-    })
-  }, [])
-
   const initial = email?.[0]?.toUpperCase() ?? '?'
 
   async function handleLogout() {
@@ -33,89 +45,128 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 flex flex-col z-30 bg-[#09090f] border-r border-white/[0.06]">
-      {/* Logo */}
-      <div className="px-5 pt-6 pb-5">
-        <div className="flex items-center gap-3">
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30">
-            <TrendingUp size={16} className="text-white" strokeWidth={2.5} />
+    <aside
+      className={cn(
+        'fixed left-0 top-0 h-screen z-30 flex flex-col',
+        'transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+        open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      )}
+      style={{
+        width: 232,
+        background: 'rgba(7,9,15,0.55)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderRight: '1px solid var(--line)',
+      }}
+    >
+      {/* ── Logo ── */}
+      <div className="px-4 pt-5 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'linear-gradient(135deg, #fbbf24, #f97316)', color: '#0a0d14' }}
+          >
+            <Mountain size={18} strokeWidth={2.25} />
           </div>
           <div>
-            <p className="text-sm font-bold text-white tracking-tight">Mis Finanzas</p>
-            <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
-              Personal Finance
-            </p>
+            <div className="text-[14px] font-bold display tracking-tight" style={{ color: 'var(--text-0)' }}>
+              Ascend
+            </div>
+            <div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>
+              Personal Dev OS
+            </div>
           </div>
         </div>
+        <button
+          onClick={onClose}
+          className="lg:hidden rounded-lg p-1.5 transition-colors hover:bg-white/[0.06]"
+          style={{ color: 'var(--text-2)' }}
+          aria-label="Cerrar menú"
+        >
+          <X size={15} />
+        </button>
       </div>
 
-      {/* Divider */}
-      <div className="mx-5 h-px bg-white/[0.06]" />
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
-          Menú
-        </p>
-        {NAV_ITEMS.map(({ href, label, Icon }) => {
-          const active = pathname === href
+      {/* ── Nav ── */}
+      <nav className="flex-1 px-3 pt-4 space-y-1">
+        <div
+          className="text-[10px] num uppercase tracking-[0.2em] px-2 mb-2"
+          style={{ color: 'var(--text-2)' }}
+        >
+          Realms
+        </div>
+        {NAV.map((item) => {
+          const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
           return (
             <Link
-              key={href}
-              href={href}
+              key={item.href}
+              href={item.href}
+              onClick={onClose}
               className={cn(
-                'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                active
-                  ? 'bg-indigo-500/10 text-indigo-300'
-                  : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
+                'nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium',
+                active && 'active'
               )}
+              style={
+                {
+                  color: active ? 'var(--text-0)' : 'var(--text-1)',
+                  '--nav-accent': item.accent,
+                } as React.CSSProperties
+              }
             >
-              <Icon
-                size={16}
-                className={cn(
-                  'shrink-0 transition-colors',
-                  active ? 'text-indigo-400' : 'text-gray-600 group-hover:text-gray-400'
-                )}
-              />
-              {label}
+              <item.Icon size={16} style={{ color: active ? item.accent : 'inherit' }} />
+              <span>{item.label}</span>
               {active && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                <span
+                  className="ml-auto text-[10px] num px-1.5 py-0.5 rounded-md"
+                  style={{ background: `${item.accent}1f`, color: item.accent }}
+                >
+                  •
+                </span>
               )}
             </Link>
           )
         })}
-
-        {/* AI hint */}
-        <div className="mt-4 mx-0">
-          <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-500/[0.08] to-indigo-500/[0.06] border border-violet-500/10">
-            <Sparkles size={14} className="text-violet-400 shrink-0" />
-            <div>
-              <p className="text-xs font-medium text-violet-300">Asistente IA</p>
-              <p className="text-[10px] text-gray-500 mt-0.5">Botón abajo a la derecha</p>
-            </div>
-          </div>
-        </div>
       </nav>
 
-      {/* User section */}
-      <div className="mx-5 h-px bg-white/[0.06]" />
-      <div className="px-3 py-4 space-y-0.5">
-        {/* Email row */}
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
-          <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white">
-            {initial}
-          </div>
-          <p className="text-xs text-gray-400 truncate flex-1 min-w-0">{email ?? '...'}</p>
-        </div>
-
-        {/* Logout */}
-        <button
-          onClick={() => void handleLogout()}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-300 hover:bg-white/[0.04] transition-all duration-150"
+      {/* ── User footer ── */}
+      <div className="px-3 pb-4 mt-4">
+        <div
+          className="rounded-2xl p-3 flex items-center gap-3"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--line)' }}
         >
-          <LogOut size={15} className="shrink-0" />
-          <span className="text-sm">Cerrar sesión</span>
-        </button>
+          <div className="relative shrink-0">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-[14px] font-semibold"
+              style={{ background: 'linear-gradient(135deg, #312e81, #6d28d9)', color: '#e9d5ff' }}
+            >
+              {initial}
+            </div>
+            <div className="absolute -bottom-1 -right-1">
+              <div
+                className="lvl-chip text-[9px] px-1.5 py-0.5 rounded-md"
+                style={{ boxShadow: '0 0 10px rgba(251,191,36,0.5)' }}
+              >
+                LVL {level}
+              </div>
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[12.5px] font-semibold truncate" style={{ color: 'var(--text-0)' }}>
+              {email ?? '...'}
+            </div>
+            <div className="text-[10.5px] num truncate" style={{ color: 'var(--text-2)' }}>
+              Ascendant
+            </div>
+          </div>
+          <button
+            onClick={() => void handleLogout()}
+            className="transition-colors p-1 rounded-lg hover:bg-white/[0.06]"
+            style={{ color: 'var(--text-2)' }}
+            title="Cerrar sesión"
+          >
+            <LogOut size={14} />
+          </button>
+        </div>
       </div>
     </aside>
   )

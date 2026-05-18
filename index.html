@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ascend — Personal Development OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Space Grotesk', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  :root {
+    --bg-0: #07090f;
+    --bg-1: #0b0f18;
+    --bg-2: #111726;
+    --line: rgba(255,255,255,0.06);
+    --line-2: rgba(255,255,255,0.1);
+    --text-0: #e7ecf3;
+    --text-1: #aab3c2;
+    --text-2: #6c7588;
+    --finance: #34d399;
+    --finance-glow: rgba(52, 211, 153, 0.35);
+    --fitness: #8b5cf6;
+    --fitness-2: #38bdf8;
+    --fitness-glow: rgba(139, 92, 246, 0.35);
+    --learning: #f97316;
+    --learning-glow: rgba(249, 115, 22, 0.35);
+    --xp: #fbbf24;
+  }
+  html, body, #root { height: 100%; background: var(--bg-0); color: var(--text-0); font-family: 'Space Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(139,92,246,0.08), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(52,211,153,0.06), transparent 60%),
+      var(--bg-0);
+  }
+  .glass {
+    background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)), rgba(13, 17, 28, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+  }
+  .glass:hover { border-color: var(--line-2); }
+  .hairline { border-color: var(--line); }
+  .num { font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; letter-spacing: -0.02em; }
+  .display { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .xp-shimmer::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    animation: shimmer 2.6s linear infinite;
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 var(--glow, rgba(251,191,36,0.5)); }
+    50% { box-shadow: 0 0 24px 4px var(--glow, rgba(251,191,36,0.5)); }
+  }
+  .pulse-glow { animation: pulseGlow 2.4s ease-in-out infinite; }
+  @keyframes flicker {
+    0%, 100% { transform: scale(1) rotate(-2deg); opacity: 1; }
+    50% { transform: scale(1.06) rotate(2deg); opacity: 0.92; }
+  }
+  .flame { animation: flicker 1.8s ease-in-out infinite; transform-origin: 50% 80%; }
+  @keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .float-y { animation: floatY 4s ease-in-out infinite; }
+  .hex { clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%); }
+  .quest-check {
+    appearance: none; -webkit-appearance: none;
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 1.5px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.02);
+    position: relative; cursor: pointer;
+    transition: all 180ms ease; flex-shrink: 0;
+  }
+  .quest-check:hover { border-color: rgba(255,255,255,0.35); transform: scale(1.05); }
+  .quest-check:checked { background: var(--accent, #f97316); border-color: var(--accent, #f97316); box-shadow: 0 0 16px var(--accent-glow, rgba(249,115,22,0.45)); }
+  .quest-check:checked::after { content: ''; position: absolute; left: 6px; top: 2px; width: 6px; height: 11px; border: solid #0a0d14; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+  .xp-track { background: rgba(255,255,255,0.05); border-radius: 999px; overflow: hidden; position: relative; }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, #fbbf24, #f97316 50%, #ec4899); border-radius: 999px; position: relative; transition: width 700ms cubic-bezier(.2,.8,.2,1); }
+  .seg-bar { display: flex; gap: 3px; }
+  .seg { flex: 1; height: 8px; border-radius: 2px; background: rgba(255,255,255,0.06); transition: background 250ms ease, box-shadow 250ms ease; }
+  .seg.on { background: var(--seg-color, #fbbf24); box-shadow: 0 0 8px var(--seg-glow, rgba(251,191,36,0.5)); }
+  .dot-grid { background-image: radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px); background-size: 18px 18px; }
+  .nav-item { position: relative; transition: all 180ms ease; }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-0); }
+  .nav-item.active { background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); color: var(--text-0); }
+  .nav-item.active::before { content: ''; position: absolute; left: -1px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--nav-accent, #e7ecf3); box-shadow: 0 0 12px var(--nav-accent, #e7ecf3); }
+  .btn-primary { transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease; }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .ring-track { stroke: rgba(255,255,255,0.07); }
+  .ring-fill { transition: stroke-dashoffset 800ms cubic-bezier(.2,.8,.2,1); }
+  .quest-row { transition: background 160ms ease, transform 160ms ease; }
+  .quest-row:hover { background: rgba(255,255,255,0.025); }
+  .lvl-chip { background: linear-gradient(135deg, #fbbf24, #f97316); color: #0a0d14; font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em; }
+  .lift { transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease; }
+  .lift:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.14); }
+  @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 99px; background: var(--text-1); margin-right: 4px; animation: blink 1.4s infinite both; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes auroraShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  .aurora {
+    background: linear-gradient(120deg, rgba(139,92,246,0.18), rgba(56,189,248,0.12), rgba(249,115,22,0.14), rgba(139,92,246,0.18));
+    background-size: 200% 200%;
+    animation: auroraShift 14s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- COMPONENTS                                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+function Icon({ name, size = 18, strokeWidth = 1.75, className = '', style }) {
+  return (
+    <i data-lucide={name} style={{ width: size, height: size, ...(style || {}) }}
+       className={`inline-block shrink-0 ${className}`} data-stroke-width={strokeWidth} />
+  );
+}
+
+function Card({ children, className = '', as: Tag = 'div', ...rest }) {
+  return <Tag className={`glass lift ${className}`} {...rest}>{children}</Tag>;
+}
+
+function SectionHeader({ kicker, title, icon, accent, right }) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2.5">
+        {icon ? (
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${accent}1f`, color: accent }}>
+            <Icon name={icon} size={15} />
+          </div>
+        ) : null}
+        <div>
+          {kicker ? <div className="text-[10px] uppercase tracking-[0.18em] num" style={{ color: 'var(--text-2)' }}>{kicker}</div> : null}
+          <div className="text-[15px] font-semibold display" style={{ color: 'var(--text-0)' }}>{title}</div>
+        </div>
+      </div>
+      {right}
+    </div>
+  );
+}
+
+function useAnimatedNumber(target, duration = 800) {
+  const [val, setVal] = useState(target);
+  const fromRef = useRef(target);
+  useEffect(() => {
+    const from = fromRef.current;
+    const start = performance.now();
+    let raf;
+    const step = (t) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(from + (target - from) * eased);
+      if (p < 1) raf = requestAnimationFrame(step);
+      else fromRef.current = target;
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
+function XPBar({ value, max, accent = '#fbbf24', height = 6, animated = true }) {
+  const pct = Math.max(0, Math.min(1, value / max));
+  return (
+    <div className="xp-track relative" style={{ height }}>
+      <div className={`xp-fill relative overflow-hidden ${animated ? 'xp-shimmer' : ''}`}
+           style={{ width: `${pct * 100}%`, height: '100%' }} />
+    </div>
+  );
+}
+
+function SegBar({ value, max = 10, color = '#fbbf24', glow }) {
+  return (
+    <div className="seg-bar" style={{ '--seg-color': color, '--seg-glow': glow || `${color}80` }}>
+      {Array.from({ length: max }).map((_, i) => (
+        <span key={i} className={`seg ${i < value ? 'on' : ''}`} />
+      ))}
+    </div>
+  );
+}
+
+function ProgressRing({ size = 140, stroke = 10, value = 0.6, color = '#34d399', glow, children }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const animated = useAnimatedNumber(value, 900);
+  const offset = c * (1 - Math.max(0, Math.min(1, animated)));
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="rotate-[-90deg]">
+        <defs>
+          <linearGradient id={`g-${color.replace('#','')}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={color} />
+            <stop offset="100%" stopColor={color} stopOpacity="0.7" />
+          </linearGradient>
+        </defs>
+        <circle cx={size/2} cy={size/2} r={r} fill="transparent" strokeWidth={stroke} className="ring-track" />
+        <circle cx={size/2} cy={size/2} r={r} fill="transparent"
+          stroke={`url(#g-${color.replace('#','')})`} strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
+          className="ring-fill" style={{ filter: glow ? `drop-shadow(0 0 8px ${glow})` : 'none' }} />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">{children}</div>
+    </div>
+  );
+}
+
+function Sparkline({ data, color = '#34d399', height = 36, fill = true, width = 140 }) {
+  const path = useMemo(() => {
+    if (!data.length) return '';
+    const min = Math.min(...data), max = Math.max(...data), span = max - min || 1;
+    const step = width / (data.length - 1);
+    return data.map((v, i) => {
+      const x = i * step, y = height - ((v - min) / span) * (height - 4) - 2;
+      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    }).join(' ');
+  }, [data, width, height]);
+  const area = useMemo(() => path ? `${path} L ${width} ${height} L 0 ${height} Z` : '', [path, width, height]);
+  const gid = `spark-${color.replace('#','')}-${Math.random().toString(36).slice(2,7)}`;
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {fill && <path d={area} fill={`url(#${gid})`} />}
+      <path d={path} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function QuestRow({ id, label, sub, xp, checked, onToggle, accent = '#f97316' }) {
+  return (
+    <label htmlFor={id} className="quest-row flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
+      <input id={id} type="checkbox" className="quest-check" checked={checked}
+             onChange={() => onToggle && onToggle(id)}
+             style={{ '--accent': accent, '--accent-glow': `${accent}66` }} />
+      <div className="flex-1 min-w-0">
+        <div className={`text-[13.5px] truncate ${checked ? 'line-through' : ''}`}
+             style={{ color: checked ? 'var(--text-2)' : 'var(--text-0)' }}>{label}</div>
+        {sub ? <div className="text-[11px] mt-0.5 num" style={{ color: 'var(--text-2)' }}>{sub}</div> : null}
+      </div>
+      <div className="text-[11px] num font-semibold px-2 py-1 rounded-md"
+           style={{ color: accent, background: `${accent}14`, border: `1px solid ${accent}26` }}>+{xp} XP</div>
+    </label>
+  );
+}
+
+function Stat({ label, value, unit, sub, delta, color, icon }) {
+  const positive = (delta || '').toString().startsWith('+');
+  const negative = (delta || '').toString().startsWith('-');
+  return (
+    <div className="rounded-2xl p-4 lift hairline border" style={{ background: 'rgba(255,255,255,0.02)' }}>
+      <div className="flex items-start justify-between">
+        <div className="text-[10px] uppercase tracking-[0.18em] num" style={{ color: 'var(--text-2)' }}>{label}</div>
+        {icon ? <Icon name={icon} size={14} style={{ color: color || 'var(--text-2)' }} /> : null}
+      </div>
+      <div className="mt-2 flex items-baseline gap-1.5">
+        <div className="num text-[26px] font-semibold" style={{ color: 'var(--text-0)' }}>{value}</div>
+        {unit ? <div className="num text-[12px]" style={{ color: 'var(--text-2)' }}>{unit}</div> : null}
+      </div>
+      <div className="mt-1 flex items-center gap-2 text-[11px]">
+        {delta ? (
+          <span className="num inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md"
+                style={{ color: positive ? '#34d399' : negative ? '#f87171' : 'var(--text-2)',
+                         background: positive ? 'rgba(52,211,153,0.08)' : negative ? 'rgba(248,113,113,0.08)' : 'rgba(255,255,255,0.04)' }}>
+            <Icon name={positive ? 'trending-up' : negative ? 'trending-down' : 'minus'} size={11} />
+            {delta}
+          </span>
+        ) : null}
+        {sub ? <span style={{ color: 'var(--text-2)' }}>{sub}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+function LevelBadge({ level = 12, size = 44 }) {
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <div className="hex absolute inset-0" style={{ background: 'linear-gradient(135deg, #fbbf24, #f97316)' }} />
+      <div className="hex absolute" style={{ inset: 2, background: '#0b0f18' }} />
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className="text-[8px] uppercase num" style={{ color: '#fbbf24', letterSpacing: '0.18em', lineHeight: 1 }}>LVL</div>
+        <div className="num text-[15px] font-bold leading-none mt-0.5" style={{ color: '#fff' }}>{level}</div>
+      </div>
+    </div>
+  );
+}
+
+function Chip({ children, color = '#aab3c2', icon, className = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md num ${className}`}
+          style={{ color, background: `${color}14`, border: `1px solid ${color}26` }}>
+      {icon ? <Icon name={icon} size={12} /> : null}
+      {children}
+    </span>
+  );
+}
+
+function Button({ children, onClick, variant = 'primary', accent = '#fbbf24', icon, size = 'md', className = '', disabled }) {
+  const base = 'btn-primary inline-flex items-center justify-center gap-2 rounded-xl font-medium select-none transition-all';
+  const sizes = { sm: 'text-[12px] px-3 py-1.5', md: 'text-[13px] px-4 py-2.5', lg: 'text-[14px] px-5 py-3' };
+  const styles = variant === 'primary'
+    ? { background: `linear-gradient(180deg, ${accent}, ${accent}cc)`, color: '#0a0d14', boxShadow: `0 4px 14px ${accent}33` }
+    : variant === 'ghost'
+    ? { background: 'transparent', color: 'var(--text-0)', border: '1px solid var(--line-2)' }
+    : { background: 'rgba(255,255,255,0.04)', color: 'var(--text-0)', border: '1px solid var(--line)' };
+  return (
+    <button onClick={onClick} disabled={disabled}
+            className={`${base} ${sizes[size]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={styles}>
+      {icon ? <Icon name={icon} size={size === 'sm' ? 13 : 15} /> : null}
+      {children}
+    </button>
+  );
+}
+
+function Tabs({ tabs, value, onChange, accent = '#fbbf24' }) {
+  return (
+    <div className="inline-flex items-center gap-1 p-1 rounded-xl"
+         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--line)' }}>
+      {tabs.map((t) => {
+        const active = value === t.id;
+        return (
+          <button key={t.id} onClick={() => onChange(t.id)}
+                  className="relative text-[12px] px-3 py-1.5 rounded-lg transition-colors num"
+                  style={{ color: active ? '#0a0d14' : 'var(--text-1)', background: active ? accent : 'transparent', fontWeight: active ? 600 : 500 }}>
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function useToast() {
+  const [toast, setToast] = useState(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(t);
+  }, [toast]);
+  const Toast = () => toast ? (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90]">
+      <div className="glass px-4 py-3 flex items-center gap-3"
+           style={{ border: `1px solid ${toast.color || '#fbbf24'}40`, boxShadow: `0 10px 40px ${toast.color || '#fbbf24'}26` }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+             style={{ background: `${toast.color || '#fbbf24'}1f`, color: toast.color || '#fbbf24' }}>
+          <Icon name={toast.icon || 'sparkles'} size={16} />
+        </div>
+        <div>
+          <div className="text-[13px] font-semibold">{toast.title}</div>
+          {toast.sub ? <div className="text-[11.5px]" style={{ color: 'var(--text-2)' }}>{toast.sub}</div> : null}
+        </div>
+      </div>
+    </div>
+  ) : null;
+  return { show: setToast, Toast };
+}
+
+function PlaceholderImg({ label = 'Image', className = '', height = 120 }) {
+  return (
+    <div className={`rounded-xl flex items-center justify-center text-[11px] num ${className}`}
+         style={{ height, background: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 6px, rgba(255,255,255,0.05) 6px 12px)', color: 'var(--text-2)', border: '1px dashed var(--line-2)' }}>
+      {label}
+    </div>
+  );
+}
+
+Object.assign(window, { Icon, Card, SectionHeader, XPBar, SegBar, ProgressRing, Sparkline, QuestRow, Stat, LevelBadge, Chip, Button, Tabs, useToast, PlaceholderImg, useAnimatedNumber });
+</script>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- VIEWS                                                       -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+const { useState: _useState, useEffect: _useEffect, useMemo: _useMemo } = React;
+
+function DashboardView({ state, dispatch, toast }) {
+  const { user, finance, fitness, learning, quests, aiQuest } = state;
+  return (
+    <div className="grid grid-cols-12 gap-5 pb-12">
+      <div className="col-span-12"><AIQuestCard aiQuest={aiQuest} dispatch={dispatch} toast={toast} /></div>
+      <div className="col-span-12 lg:col-span-7"><FinanceWidget finance={finance} /></div>
+      <div className="col-span-12 lg:col-span-5"><WeeklyActivity user={user} /></div>
+      <div className="col-span-12 lg:col-span-7"><FitnessWidget fitness={fitness} /></div>
+      <div className="col-span-12 lg:col-span-5"><LearningWidget learning={learning} dispatch={dispatch} toast={toast} /></div>
+      <div className="col-span-12"><QuestBoard quests={quests} dispatch={dispatch} toast={toast} /></div>
+    </div>
+  );
+}
+
+function AIQuestCard({ aiQuest, dispatch, toast }) {
+  const [accepted, setAccepted] = _useState(false);
+  const onAccept = () => {
+    if (accepted) return;
+    setAccepted(true);
+    dispatch({ type: 'addXP', amount: 25 });
+    toast({ title: 'Quest accepted', sub: '+25 XP — "' + aiQuest.title + '"', icon: 'sparkles', color: '#fbbf24' });
+  };
+  return (
+    <div className="relative overflow-hidden rounded-[20px] glass aurora">
+      <div className="relative p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-stretch">
+        <div className="flex sm:flex-col items-center sm:items-start gap-3 sm:gap-4 sm:w-[180px] shrink-0">
+          <div className="relative">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center pulse-glow"
+                 style={{ background: 'radial-gradient(circle at 30% 30%, #c4b5fd, #8b5cf6 45%, #6d28d9 80%)', '--glow': 'rgba(139,92,246,0.45)' }}>
+              <Icon name="sparkles" size={22} style={{ color: '#fff' }} />
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase num tracking-[0.2em]" style={{ color: 'var(--text-2)' }}>AI Guide</div>
+            <div className="display text-[15px] font-semibold leading-tight mt-0.5">Sage</div>
+            <div className="text-[11px] mt-0.5 flex items-center gap-1.5" style={{ color: '#34d399' }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
+              <span>Online · Tier IV</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 sm:border-l sm:border-r hairline sm:px-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Chip color="#8b5cf6" icon="zap">Daily Quest</Chip>
+            <Chip color="#aab3c2" icon="clock">Resets in 06:42</Chip>
+          </div>
+          <div className="text-[18px] sm:text-[19px] display font-semibold leading-snug" style={{ color: 'var(--text-0)' }}>"{aiQuest.title}"</div>
+          <div className="text-[13px] mt-1.5 max-w-prose" style={{ color: 'var(--text-1)' }}>{aiQuest.body}</div>
+        </div>
+        <div className="flex sm:flex-col items-stretch sm:items-end gap-3 sm:w-[200px] shrink-0 justify-between">
+          <div className="text-right">
+            <div className="text-[10px] uppercase num tracking-[0.2em]" style={{ color: 'var(--text-2)' }}>Reward</div>
+            <div className="flex items-baseline gap-1 justify-end mt-1">
+              <div className="num text-[22px] font-bold" style={{ color: '#fbbf24' }}>+25</div>
+              <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>XP</div>
+            </div>
+            <div className="text-[11px] num mt-0.5" style={{ color: 'var(--text-2)' }}>+1 ☉ Wisdom</div>
+          </div>
+          <Button onClick={onAccept} accent={accepted ? '#34d399' : '#fbbf24'} icon={accepted ? 'check' : 'swords'} size="md" className="w-full sm:w-auto">
+            {accepted ? 'Accepted' : 'Accept Quest'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FinanceWidget({ finance }) {
+  const saved = finance.income - finance.expenses;
+  const goalPct = Math.min(1, saved / finance.savingsGoal);
+  return (
+    <Card className="p-5">
+      <SectionHeader kicker="Vault" title="Finances" icon="wallet" accent="#34d399" right={<Chip color="#34d399" icon="trending-up">+8.2% MoM</Chip>} />
+      <div className="grid grid-cols-12 gap-4 mt-1">
+        <div className="col-span-12 sm:col-span-7 grid grid-cols-2 gap-3">
+          <Stat label="Income" value={`$${finance.income.toLocaleString()}`} sub="May" delta="+4.1%" color="#34d399" icon="arrow-down-to-line" />
+          <Stat label="Expenses" value={`$${finance.expenses.toLocaleString()}`} sub="May" delta="-2.6%" color="#f87171" icon="arrow-up-from-line" />
+          <Stat label="Saved" value={`$${saved.toLocaleString()}`} sub="this month" delta="+12.4%" color="#34d399" icon="piggy-bank" />
+          <Stat label="Net worth" value={`$${(finance.netWorth/1000).toFixed(1)}k`} sub="all accounts" delta="+1.8%" color="#34d399" icon="landmark" />
+        </div>
+        <div className="col-span-12 sm:col-span-5 rounded-2xl p-4 hairline border dot-grid flex flex-col" style={{ background: 'rgba(52,211,153,0.04)' }}>
+          <div className="text-[10px] uppercase num tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>Savings goal · May</div>
+          <div className="flex-1 flex items-center justify-center my-2">
+            <ProgressRing size={150} stroke={11} value={goalPct} color="#34d399" glow="#34d39966">
+              <div className="text-center">
+                <div className="num text-[22px] font-bold" style={{ color: 'var(--text-0)' }}>{Math.round(goalPct*100)}%</div>
+                <div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>complete</div>
+              </div>
+            </ProgressRing>
+          </div>
+          <div className="flex justify-between text-[12px] num">
+            <span style={{ color: 'var(--text-2)' }}>${saved.toLocaleString()} saved</span>
+            <span style={{ color: 'var(--text-0)' }}>${finance.savingsGoal.toLocaleString()} goal</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {finance.categories.map((c) => (
+          <div key={c.name} className="rounded-xl p-3 hairline border lift" style={{ background: 'rgba(255,255,255,0.015)' }}>
+            <div className="flex items-center justify-between">
+              <div className="text-[12px]" style={{ color: 'var(--text-1)' }}>{c.name}</div>
+              <div className="num text-[11px]" style={{ color: 'var(--text-2)' }}>{Math.round(c.value/c.budget*100)}%</div>
+            </div>
+            <div className="mt-2 num text-[16px] font-semibold">${c.value}<span className="text-[11px]" style={{ color: 'var(--text-2)' }}> / ${c.budget}</span></div>
+            <div className="mt-2"><XPBar value={c.value} max={c.budget} animated={false} height={4} /></div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function WeeklyActivity({ user }) {
+  return (
+    <Card className="p-5 h-full">
+      <SectionHeader kicker="Cadence" title="This week" icon="activity" accent="#fbbf24" right={<Chip color="#f97316" icon="flame">{user.streak} day streak</Chip>} />
+      <div className="grid grid-cols-7 gap-1.5 mt-2">
+        {user.weekActivity.map((d, i) => {
+          const intensity = Math.min(1, d.value);
+          const bg = `rgba(251,191,36,${0.08 + intensity * 0.55})`;
+          const today = i === user.todayIdx;
+          return (
+            <div key={i} className="text-center">
+              <div className="text-[10px] num uppercase mb-1.5" style={{ color: today ? '#fbbf24' : 'var(--text-2)' }}>{d.day}</div>
+              <div className="aspect-square rounded-lg flex items-center justify-center lift"
+                   style={{ background: bg, border: today ? '1px solid #fbbf24' : '1px solid var(--line)', boxShadow: today ? '0 0 20px rgba(251,191,36,0.25)' : 'none' }}>
+                {d.value > 0.7 ? <Icon name="flame" size={14} className="flame" style={{ color: '#fbbf24' }} />
+                  : d.value > 0 ? <span className="num text-[10px]" style={{ color: 'var(--text-1)' }}>{Math.round(d.value*100)}</span>
+                  : <span className="text-[10px]" style={{ color: 'var(--text-2)' }}>—</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="grid grid-cols-3 gap-3 mt-5">
+        <RingMini label="Move" value={0.82} color="#34d399" sub="6.4 km" />
+        <RingMini label="Lift" value={0.6} color="#8b5cf6" sub="3 / 5" />
+        <RingMini label="Learn" value={0.45} color="#f97316" sub="45 min" />
+      </div>
+      <div className="mt-5 p-3 rounded-xl hairline border flex items-start gap-3" style={{ background: 'rgba(139,92,246,0.05)' }}>
+        <div className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center" style={{ background: 'rgba(139,92,246,0.18)', color: '#8b5cf6' }}>
+          <Icon name="trophy" size={15} />
+        </div>
+        <div className="min-w-0">
+          <div className="text-[13px] font-semibold">Iron Pact · 5/7 done</div>
+          <div className="text-[11.5px]" style={{ color: 'var(--text-1)' }}>Hit 4 workouts this week to keep your streak. <span style={{ color: '#fbbf24' }}>+150 XP</span></div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function RingMini({ label, value, color, sub }) {
+  return (
+    <div className="rounded-xl hairline border p-3 flex items-center gap-3 lift" style={{ background: 'rgba(255,255,255,0.015)' }}>
+      <ProgressRing size={52} stroke={6} value={value} color={color} glow={`${color}66`}>
+        <div className="num text-[11px] font-semibold">{Math.round(value*100)}</div>
+      </ProgressRing>
+      <div>
+        <div className="text-[12px] font-medium">{label}</div>
+        <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+function FitnessWidget({ fitness }) {
+  return (
+    <Card className="p-5">
+      <SectionHeader kicker="Forge" title="Fitness & Health" icon="dumbbell" accent="#8b5cf6"
+        right={<div className="flex items-center gap-2"><Chip color="#8b5cf6" icon="heart-pulse">RHR 54</Chip><Chip color="#38bdf8" icon="moon">7h 42m</Chip></div>} />
+      <div className="grid grid-cols-12 gap-4 mt-1">
+        <div className="col-span-12 md:col-span-6 grid grid-cols-2 gap-3">
+          <Stat label="Body weight" value={fitness.weight} unit="kg" delta="-0.4kg" sub="vs last wk" color="#34d399" icon="weight" />
+          <Stat label="Calories in" value={fitness.calories} unit="kcal" delta="+120" sub="target 2,400" color="#8b5cf6" icon="utensils" />
+          <Stat label="Steps" value={fitness.steps.toLocaleString()} unit="/ 10k" delta="+8%" color="#38bdf8" icon="footprints" />
+          <Stat label="VO₂ max" value={fitness.vo2} unit="ml/kg" delta="+1.2" color="#34d399" icon="activity" />
+        </div>
+        <div className="col-span-12 md:col-span-6 rounded-2xl p-4 hairline border" style={{ background: 'linear-gradient(180deg, rgba(139,92,246,0.06), rgba(56,189,248,0.04))' }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[10px] uppercase num tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>Personal Records</div>
+            <Chip color="#8b5cf6" icon="medal">3 new this month</Chip>
+          </div>
+          <div className="space-y-2.5">{fitness.prs.map((pr) => <PRRow key={pr.lift} pr={pr} />)}</div>
+        </div>
+      </div>
+      <div className="grid grid-cols-12 gap-3 mt-4">
+        <CardioCard icon="footprints" color="#38bdf8" label="Running" metric={`${fitness.cardio.run.km} km`} pace={`${fitness.cardio.run.pace} /km · last 30d`} data={fitness.cardio.run.history} />
+        <CardioCard icon="bike" color="#8b5cf6" label="Cycling" metric={`${fitness.cardio.bike.km} km`} pace={`${fitness.cardio.bike.avg} km/h avg · last 30d`} data={fitness.cardio.bike.history} />
+        <CardioCard icon="waves" color="#34d399" label="Swim" metric={`${fitness.cardio.swim.m} m`} pace={`${fitness.cardio.swim.pace} /100m · last 30d`} data={fitness.cardio.swim.history} />
+      </div>
+    </Card>
+  );
+}
+
+function PRRow({ pr }) {
+  const pct = Math.min(1, pr.value / pr.target);
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+           style={{ background: `${pr.color}1f`, color: pr.color, border: `1px solid ${pr.color}33` }}>
+        <Icon name={pr.icon} size={16} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline justify-between">
+          <div className="text-[13px] font-medium">{pr.lift}</div>
+          <div className="num text-[13px] font-semibold" style={{ color: pr.color }}>
+            {pr.value}<span className="text-[11px]" style={{ color: 'var(--text-2)' }}> {pr.unit}</span>
+          </div>
+        </div>
+        <div className="mt-1.5"><XPBar value={pct*100} max={100} accent={pr.color} animated={false} height={5} /></div>
+        <div className="flex justify-between mt-1">
+          <div className="text-[10px] num uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>Tier {pr.tier}</div>
+          <div className="text-[10px] num" style={{ color: 'var(--text-2)' }}>next: {pr.target}{pr.unit}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CardioCard({ icon, color, label, metric, pace, data }) {
+  return (
+    <div className="col-span-12 sm:col-span-4 rounded-2xl p-4 hairline border lift" style={{ background: 'rgba(255,255,255,0.015)' }}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}1f`, color }}><Icon name={icon} size={14} /></div>
+          <div className="text-[12.5px] font-medium">{label}</div>
+        </div>
+        <Sparkline data={data} color={color} width={86} height={28} />
+      </div>
+      <div className="mt-2 num text-[20px] font-semibold">{metric}</div>
+      <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>{pace}</div>
+    </div>
+  );
+}
+
+function LearningWidget({ learning, dispatch, toast }) {
+  const toggle = (qId, taskId, xp, label) => {
+    dispatch({ type: 'toggleLearningTask', skillId: qId, taskId });
+    const target = learning.skills.find(s => s.id === qId).tasks.find(t => t.id === taskId);
+    if (!target.done) {
+      dispatch({ type: 'addXP', amount: xp });
+      toast({ title: `+${xp} XP — ${label}`, sub: 'Session logged. Keep ascending.', icon: 'book-open', color: '#f97316' });
+    }
+  };
+  return (
+    <Card className="p-5 h-full">
+      <SectionHeader kicker="Codex" title="Learning Hub" icon="book-open" accent="#f97316" right={<Chip color="#f97316" icon="layers">{learning.skills.length} active paths</Chip>} />
+      <div className="space-y-4 mt-1">
+        {learning.skills.map((s) => (
+          <div key={s.id} className="rounded-2xl hairline border p-3.5" style={{ background: 'rgba(249,115,22,0.03)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${s.color}1f`, color: s.color, border: `1px solid ${s.color}33` }}>
+                <Icon name={s.icon} size={18} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <div className="text-[14px] font-semibold truncate">{s.name}</div>
+                  <div className="num text-[11px]" style={{ color: 'var(--text-2)' }}>LVL {s.level} · {s.xp}/{s.xpMax} XP</div>
+                </div>
+                <div className="text-[11.5px] mt-0.5 truncate" style={{ color: 'var(--text-2)' }}>{s.path}</div>
+                <div className="mt-2"><XPBar value={s.xp} max={s.xpMax} accent={s.color} height={5} /></div>
+              </div>
+            </div>
+            <div className="mt-2 space-y-0.5">
+              {s.tasks.map((t) => (
+                <QuestRow key={t.id} id={`lt-${s.id}-${t.id}`} label={t.label} sub={t.sub} xp={t.xp}
+                          checked={t.done} onToggle={() => toggle(s.id, t.id, t.xp, t.label)} accent={s.color} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function QuestBoard({ quests, dispatch, toast }) {
+  const groups = [
+    { id: 'daily', title: 'Daily Quests', icon: 'sun', color: '#fbbf24', items: quests.daily },
+    { id: 'weekly', title: 'Weekly Missions', icon: 'calendar', color: '#8b5cf6', items: quests.weekly },
+    { id: 'epic', title: 'Epic Goals', icon: 'crown', color: '#f97316', items: quests.epic },
+  ];
+  const onToggle = (group, id, xp, label) => {
+    const item = quests[group].find((q) => q.id === id);
+    dispatch({ type: 'toggleQuest', group, id });
+    if (!item.done) {
+      dispatch({ type: 'addXP', amount: xp });
+      toast({ title: `+${xp} XP — ${label}`, icon: 'sparkles', color: '#fbbf24' });
+    }
+  };
+  return (
+    <Card className="p-5">
+      <SectionHeader kicker="Adventure log" title="Today's Quests" icon="scroll-text" accent="#fbbf24"
+        right={<div className="flex items-center gap-2"><Chip color="#aab3c2" icon="filter">All paths</Chip><Button variant="ghost" icon="plus" size="sm">New quest</Button></div>} />
+      <div className="grid grid-cols-12 gap-4 mt-2">
+        {groups.map((g) => (
+          <div key={g.id} className="col-span-12 lg:col-span-4 rounded-2xl hairline border p-4" style={{ background: 'rgba(255,255,255,0.015)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${g.color}1f`, color: g.color }}>
+                  <Icon name={g.icon} size={14} />
+                </div>
+                <div className="text-[13px] font-semibold">{g.title}</div>
+              </div>
+              <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>{g.items.filter(i=>i.done).length}/{g.items.length}</div>
+            </div>
+            <div className="space-y-1">
+              {g.items.map((q) => (
+                <QuestRow key={q.id} id={`q-${g.id}-${q.id}`} label={q.label} sub={q.sub} xp={q.xp}
+                          checked={q.done} accent={g.color} onToggle={() => onToggle(g.id, q.id, q.xp, q.label)} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function FinancesView({ state }) {
+  const f = state.finance;
+  return (
+    <div className="grid grid-cols-12 gap-5 pb-12">
+      <div className="col-span-12">
+        <Card className="p-5 dot-grid">
+          <SectionHeader kicker="May 2026" title="Vault overview" icon="wallet" accent="#34d399"
+            right={<Tabs tabs={[{id:'m',label:'Month'},{id:'q',label:'Quarter'},{id:'y',label:'Year'}]} value="m" onChange={()=>{}} accent="#34d399" />} />
+          <div className="grid grid-cols-12 gap-4 mt-1">
+            <div className="col-span-12 lg:col-span-8 grid grid-cols-4 gap-3">
+              <Stat label="Income" value={`$${f.income.toLocaleString()}`} delta="+4.1%" color="#34d399" icon="arrow-down-to-line" />
+              <Stat label="Expenses" value={`$${f.expenses.toLocaleString()}`} delta="-2.6%" color="#f87171" icon="arrow-up-from-line" />
+              <Stat label="Saved" value={`$${(f.income-f.expenses).toLocaleString()}`} delta="+12.4%" color="#34d399" icon="piggy-bank" />
+              <Stat label="Net worth" value={`$${(f.netWorth/1000).toFixed(1)}k`} delta="+1.8%" color="#34d399" icon="landmark" />
+              <div className="col-span-4 rounded-2xl hairline border p-4" style={{ background: 'rgba(255,255,255,0.015)' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>Cashflow · last 12 months</div>
+                  <div className="flex gap-2"><Chip color="#34d399" icon="circle">Income</Chip><Chip color="#f87171" icon="circle">Expenses</Chip></div>
+                </div>
+                <CashflowChart data={f.history} />
+              </div>
+            </div>
+            <div className="col-span-12 lg:col-span-4 rounded-2xl hairline border p-4 flex flex-col items-center" style={{ background: 'rgba(52,211,153,0.05)' }}>
+              <div className="text-[10px] num uppercase tracking-[0.18em] self-start" style={{ color: 'var(--text-2)' }}>Savings goal · May</div>
+              <div className="flex-1 my-4">
+                <ProgressRing size={180} stroke={14} value={(f.income-f.expenses)/f.savingsGoal} color="#34d399" glow="#34d39966">
+                  <div className="text-center">
+                    <div className="num text-[28px] font-bold">{Math.round((f.income-f.expenses)/f.savingsGoal*100)}%</div>
+                    <div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>of $2,500</div>
+                  </div>
+                </ProgressRing>
+              </div>
+              <Button accent="#34d399" icon="target" size="sm" className="w-full">Adjust goal</Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12 lg:col-span-7">
+        <Card className="p-5">
+          <SectionHeader kicker="Allocation" title="Budget categories" icon="pie-chart" accent="#34d399" />
+          <div className="grid grid-cols-2 gap-3">
+            {f.categories.concat([{ name: 'Subscriptions', value: 89, budget: 100 }, { name: 'Travel', value: 320, budget: 500 }, { name: 'Health', value: 145, budget: 200 }]).map((c, idx) => (
+              <div key={idx} className="rounded-xl p-3 hairline border lift" style={{ background: 'rgba(255,255,255,0.015)' }}>
+                <div className="flex items-baseline justify-between">
+                  <div className="text-[12.5px] font-medium">{c.name}</div>
+                  <div className="num text-[11px]" style={{ color: c.value/c.budget>0.9?'#f87171':'var(--text-2)' }}>{Math.round(c.value/c.budget*100)}%</div>
+                </div>
+                <div className="num text-[18px] font-semibold mt-1">${c.value}<span className="text-[11px]" style={{ color: 'var(--text-2)' }}> / ${c.budget}</span></div>
+                <div className="mt-2"><XPBar value={c.value} max={c.budget} accent={c.value/c.budget>0.9?'#f87171':'#34d399'} animated={false} height={5} /></div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12 lg:col-span-5">
+        <Card className="p-5 h-full">
+          <SectionHeader kicker="Ledger" title="Recent transactions" icon="receipt" accent="#34d399" />
+          <div className="divide-y divide-white/[0.04]">
+            {f.transactions.map((t) => (
+              <div key={t.id} className="flex items-center gap-3 py-2.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-1)' }}>
+                  <Icon name={t.icon} size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12.5px] truncate">{t.label}</div>
+                  <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>{t.cat} · {t.date}</div>
+                </div>
+                <div className="num text-[13px] font-semibold" style={{ color: t.amount > 0 ? '#34d399' : 'var(--text-0)' }}>
+                  {t.amount > 0 ? '+' : ''}${Math.abs(t.amount).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function CashflowChart({ data }) {
+  const W = 540, H = 160, P = 16;
+  const max = Math.max(...data.flatMap(d => [d.in, d.out]));
+  const step = (W - P*2) / (data.length - 1);
+  const toY = (v) => H - P - (v / max) * (H - P*2);
+  const inPath = data.map((d,i)=>`${i===0?'M':'L'} ${P + i*step} ${toY(d.in)}`).join(' ');
+  const outPath = data.map((d,i)=>`${i===0?'M':'L'} ${P + i*step} ${toY(d.out)}`).join(' ');
+  const inArea = `${inPath} L ${P + (data.length-1)*step} ${H-P} L ${P} ${H-P} Z`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" style={{ height: H }}>
+      <defs><linearGradient id="cf-in" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#34d399" stopOpacity="0.3" /><stop offset="100%" stopColor="#34d399" stopOpacity="0" /></linearGradient></defs>
+      {[0.25,0.5,0.75].map((g,i)=>(<line key={i} x1={P} x2={W-P} y1={P + g*(H-P*2)} y2={P + g*(H-P*2)} stroke="rgba(255,255,255,0.04)" strokeDasharray="2 4" />))}
+      <path d={inArea} fill="url(#cf-in)" />
+      <path d={inPath} stroke="#34d399" strokeWidth="2" fill="none" />
+      <path d={outPath} stroke="#f87171" strokeWidth="1.5" fill="none" strokeDasharray="3 3" />
+      {data.map((d,i)=>(<g key={i}><text x={P + i*step} y={H-2} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.4)" style={{fontFamily:'JetBrains Mono'}}>{d.m}</text></g>))}
+    </svg>
+  );
+}
+
+function FitnessView({ state }) {
+  const f = state.fitness;
+  return (
+    <div className="grid grid-cols-12 gap-5 pb-12">
+      <div className="col-span-12">
+        <Card className="p-5">
+          <SectionHeader kicker="The Forge" title="Body composition & vitals" icon="dumbbell" accent="#8b5cf6"
+            right={<Tabs tabs={[{id:'w',label:'Week'},{id:'m',label:'Month'},{id:'q',label:'Quarter'}]} value="m" onChange={()=>{}} accent="#8b5cf6"/>} />
+          <div className="grid grid-cols-12 gap-3 mt-1">
+            <div className="col-span-12 md:col-span-3"><Stat label="Body weight" value={f.weight} unit="kg" delta="-0.4kg" sub="vs last wk" color="#34d399" icon="weight" /></div>
+            <div className="col-span-12 md:col-span-3"><Stat label="Body fat" value="14.2" unit="%" delta="-0.6%" color="#34d399" icon="droplet" /></div>
+            <div className="col-span-12 md:col-span-3"><Stat label="Resting HR" value="54" unit="bpm" delta="-2" color="#34d399" icon="heart-pulse" /></div>
+            <div className="col-span-12 md:col-span-3"><Stat label="Sleep" value="7h 42m" delta="+18m" color="#34d399" icon="moon" /></div>
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12 lg:col-span-7">
+        <Card className="p-5">
+          <SectionHeader kicker="Iron" title="Personal records" icon="medal" accent="#8b5cf6" right={<Chip color="#8b5cf6" icon="trending-up">+3 PRs this month</Chip>} />
+          <div className="grid grid-cols-2 gap-3 mt-1">
+            {f.prs.concat([{ lift: 'Overhead Press', value: 65, unit: 'kg', target: 70, color: '#38bdf8', icon: 'arrow-up', tier: 'III' }, { lift: 'Pull-ups (BW+)', value: 25, unit: 'kg', target: 30, color: '#34d399', icon: 'arrow-big-up-dash', tier: 'III' }]).map((pr) => (
+              <div key={pr.lift} className="rounded-2xl hairline border p-3.5 lift" style={{ background: 'rgba(255,255,255,0.015)' }}><PRRow pr={pr} /></div>
+            ))}
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12 lg:col-span-5">
+        <Card className="p-5 h-full">
+          <SectionHeader kicker="Today" title="Macros" icon="utensils" accent="#8b5cf6" />
+          <div className="flex items-center justify-center my-2">
+            <ProgressRing size={170} stroke={12} value={f.calories/2400} color="#8b5cf6" glow="#8b5cf666">
+              <div className="text-center">
+                <div className="num text-[26px] font-bold">{f.calories}</div>
+                <div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>of 2,400 kcal</div>
+              </div>
+            </ProgressRing>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            {[{ label: 'Protein', value: 168, max: 200, color: '#34d399', unit: 'g' }, { label: 'Carbs', value: 220, max: 280, color: '#fbbf24', unit: 'g' }, { label: 'Fats', value: 62, max: 80, color: '#f97316', unit: 'g' }].map((m) => (
+              <div key={m.label} className="rounded-xl p-2.5 hairline border" style={{ background: 'rgba(255,255,255,0.015)' }}>
+                <div className="text-[10px] num uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>{m.label}</div>
+                <div className="num text-[15px] font-semibold mt-0.5">{m.value}<span className="text-[10px]" style={{ color: 'var(--text-2)' }}>{m.unit}</span></div>
+                <div className="mt-2"><XPBar value={m.value} max={m.max} accent={m.color} animated={false} height={4} /></div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12">
+        <Card className="p-5">
+          <SectionHeader kicker="Cardio" title="30-day endurance" icon="activity" accent="#38bdf8" />
+          <div className="grid grid-cols-12 gap-3">
+            <CardioCard icon="footprints" color="#38bdf8" label="Running" metric={`${f.cardio.run.km} km`} pace={`${f.cardio.run.pace} /km · last 30d`} data={f.cardio.run.history} />
+            <CardioCard icon="bike" color="#8b5cf6" label="Cycling" metric={`${f.cardio.bike.km} km`} pace={`${f.cardio.bike.avg} km/h avg · last 30d`} data={f.cardio.bike.history} />
+            <CardioCard icon="waves" color="#34d399" label="Swim" metric={`${f.cardio.swim.m} m`} pace={`${f.cardio.swim.pace} /100m · last 30d`} data={f.cardio.swim.history} />
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function LearningView({ state, dispatch, toast }) {
+  return (
+    <div className="grid grid-cols-12 gap-5 pb-12">
+      <div className="col-span-12">
+        <Card className="p-5">
+          <SectionHeader kicker="Codex" title="Skill paths" icon="book-open" accent="#f97316" right={<Button accent="#f97316" icon="plus" size="sm">Add path</Button>} />
+          <div className="grid grid-cols-12 gap-3">
+            {state.learning.skills.map((s) => (
+              <div key={s.id} className="col-span-12 md:col-span-6 rounded-2xl hairline border p-4 lift" style={{ background: `linear-gradient(180deg, ${s.color}0d, transparent)` }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${s.color}1f`, color: s.color, border: `1px solid ${s.color}33` }}><Icon name={s.icon} size={20} /></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between"><div className="text-[15px] font-semibold">{s.name}</div><div className="num text-[11px]" style={{ color: 'var(--text-2)' }}>LVL {s.level}</div></div>
+                    <div className="text-[11.5px]" style={{ color: 'var(--text-2)' }}>{s.path}</div>
+                  </div>
+                </div>
+                <div className="mt-3"><XPBar value={s.xp} max={s.xpMax} accent={s.color} height={6} /></div>
+                <div className="flex justify-between mt-1 text-[11px] num" style={{ color: 'var(--text-2)' }}><span>{s.xp} XP</span><span>{s.xpMax - s.xp} to LVL {s.level+1}</span></div>
+                <div className="mt-3 space-y-0.5">
+                  {s.tasks.map((t) => (
+                    <QuestRow key={t.id} id={`lv-${s.id}-${t.id}`} label={t.label} sub={t.sub} xp={t.xp} checked={t.done} accent={s.color}
+                      onToggle={() => {
+                        const target = state.learning.skills.find(x=>x.id===s.id).tasks.find(x=>x.id===t.id);
+                        dispatch({ type: 'toggleLearningTask', skillId: s.id, taskId: t.id });
+                        if (!target.done) { dispatch({ type: 'addXP', amount: t.xp }); toast({ title: `+${t.xp} XP`, sub: t.label, icon: 'book-open', color: '#f97316' }); }
+                      }} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12 lg:col-span-7">
+        <Card className="p-5">
+          <SectionHeader kicker="Library" title="Currently consuming" icon="library" accent="#f97316" />
+          <div className="grid grid-cols-12 gap-3">
+            {state.learning.library.map((b) => (
+              <div key={b.id} className="col-span-12 sm:col-span-6 flex gap-3 rounded-xl hairline border p-3 lift" style={{ background: 'rgba(255,255,255,0.015)' }}>
+                <PlaceholderImg label={b.kind} className="w-16 shrink-0" height={80} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>{b.kind}</div>
+                  <div className="text-[13px] font-semibold truncate">{b.title}</div>
+                  <div className="text-[11px] truncate" style={{ color: 'var(--text-1)' }}>{b.author}</div>
+                  <div className="mt-2"><XPBar value={b.progress} max={100} accent="#f97316" animated={false} height={4} /></div>
+                  <div className="text-[10px] num mt-1" style={{ color: 'var(--text-2)' }}>{b.progress}% · {b.left}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12 lg:col-span-5">
+        <Card className="p-5 h-full">
+          <SectionHeader kicker="Mastered" title="Skill tree" icon="git-branch" accent="#f97316" />
+          <div className="space-y-2 mt-1">
+            {state.learning.mastered.map((m) => (
+              <div key={m.name} className="flex items-center gap-3 p-2.5 rounded-xl hairline border" style={{ background: 'rgba(249,115,22,0.04)' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(249,115,22,0.18)', color: '#f97316' }}><Icon name="check" size={14} /></div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12.5px] font-medium truncate">{m.name}</div>
+                  <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>{m.kind} · {m.when}</div>
+                </div>
+                <Chip color="#f97316" icon="star">+{m.xp}</Chip>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function ArenaView({ state, dispatch, toast }) {
+  const [input, setInput] = _useState('');
+  const [messages, setMessages] = _useState([{ role: 'sage', text: 'Greetings, traveler. Today the path is forged in iron and ink. What discipline would you train?' }]);
+  const [busy, setBusy] = _useState(false);
+  const send = async () => {
+    const q = input.trim();
+    if (!q || busy) return;
+    setMessages((m) => [...m, { role: 'user', text: q }]);
+    setInput('');
+    setBusy(true);
+    await new Promise(r => setTimeout(r, 1200));
+    const replies = [
+      'Every quest begins with a single step, traveler. Your streak of ' + state.user.streak + ' days speaks of iron resolve — let it forge your path forward.',
+      'The Codex remembers all who ascend. Level ' + state.user.level + ' is but a waypoint. The summit calls.',
+      'Sage observes your vault is balanced, your body in motion. Today\'s forge demands full presence. What tier will you reach?',
+      'Discipline is the currency of ascension. Log your session, claim your XP, and let the data tell your story.'
+    ];
+    setMessages((m) => [...m, { role: 'sage', text: replies[Math.floor(Math.random() * replies.length)] }]);
+    setBusy(false);
+  };
+  const agents = [
+    { name: 'Sage', role: 'Daily Guide', color: '#8b5cf6', icon: 'sparkles', tier: 'IV', desc: 'Crafts your daily quest. Reads your streaks, energy, and gaps in the codex.' },
+    { name: 'Atlas', role: 'Strength Coach', color: '#38bdf8', icon: 'dumbbell', tier: 'III', desc: 'Plans your lifts. Suggests deloads when fatigue spikes.' },
+    { name: 'Mint', role: 'Coin Steward', color: '#34d399', icon: 'wallet', tier: 'III', desc: 'Watches your vault. Flags drift from savings goals before month-end.' },
+    { name: 'Lumen', role: 'Codex Tutor', color: '#f97316', icon: 'book-open', tier: 'II', desc: 'Curates your reading queue and quizzes you on retention.' },
+  ];
+  return (
+    <div className="grid grid-cols-12 gap-5 pb-12">
+      <div className="col-span-12">
+        <Card className="p-5 aurora">
+          <SectionHeader kicker="Council" title="Your AI Agents" icon="users" accent="#8b5cf6" right={<Chip color="#8b5cf6" icon="zap">4 active</Chip>} />
+          <div className="grid grid-cols-12 gap-3">
+            {agents.map((a) => (
+              <div key={a.name} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-2xl hairline border p-4 lift" style={{ background: `linear-gradient(180deg, ${a.color}10, rgba(255,255,255,0.01))` }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${a.color}1f`, color: a.color, border: `1px solid ${a.color}33` }}><Icon name={a.icon} size={20} /></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[14px] font-semibold">{a.name}</div>
+                    <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>{a.role} · Tier {a.tier}</div>
+                  </div>
+                </div>
+                <div className="text-[11.5px] mt-2.5 leading-snug" style={{ color: 'var(--text-1)' }}>{a.desc}</div>
+                <div className="mt-3 flex items-center gap-2">
+                  <Button size="sm" variant="ghost" icon="message-circle">Brief</Button>
+                  <div className="text-[10px] num flex items-center gap-1" style={{ color: '#34d399' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#34d399', boxShadow: '0 0 6px #34d399' }} />Online
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12 lg:col-span-8">
+        <Card className="p-0 overflow-hidden flex flex-col" style={{ minHeight: 520 }}>
+          <div className="p-4 border-b hairline flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center pulse-glow"
+                 style={{ background: 'radial-gradient(circle at 30% 30%, #c4b5fd, #8b5cf6 45%, #6d28d9 80%)', '--glow': 'rgba(139,92,246,0.4)' }}>
+              <Icon name="sparkles" size={16} style={{ color: '#fff' }} />
+            </div>
+            <div className="flex-1">
+              <div className="text-[14px] font-semibold">Sage · AI Guide</div>
+              <div className="text-[11px]" style={{ color: 'var(--text-2)' }}>Tier IV · Knows your level, streak & active quests</div>
+            </div>
+            <Chip color="#34d399" icon="circle">Live</Chip>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.map((m, i) => <ChatBubble key={i} role={m.role} text={m.text} />)}
+            {busy ? <ChatBubble role="sage" text={<><span className="dot"></span><span className="dot"></span><span className="dot"></span></>} /> : null}
+          </div>
+          <div className="p-3 border-t hairline flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--line)' }}>
+              <Icon name="message-circle" size={14} style={{ color: 'var(--text-2)' }} />
+              <input value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=>{ if (e.key==='Enter') send(); }}
+                     placeholder="Ask Sage to forge today's quest…" className="flex-1 bg-transparent outline-none text-[13px]" style={{ color: 'var(--text-0)' }} />
+            </div>
+            <Button onClick={send} accent="#8b5cf6" icon={busy?'loader':'send'} disabled={busy}>{busy?'Forging…':'Send'}</Button>
+          </div>
+        </Card>
+      </div>
+      <div className="col-span-12 lg:col-span-4">
+        <Card className="p-5 h-full">
+          <SectionHeader kicker="Quick" title="Forge a quest" icon="zap" accent="#8b5cf6" />
+          <div className="space-y-2">
+            {[{ label: 'A 20-min reading sprint', icon: 'book-open', color: '#f97316' }, { label: 'A challenging lift today', icon: 'dumbbell', color: '#8b5cf6' }, { label: 'A no-spend afternoon', icon: 'wallet', color: '#34d399' }, { label: 'A 10-min meditation', icon: 'wind', color: '#38bdf8' }].map((s) => (
+              <button key={s.label} onClick={() => { setInput(`Forge me ${s.label.toLowerCase()}.`); }}
+                      className="w-full flex items-center gap-3 p-2.5 rounded-xl quest-row text-left"
+                      style={{ border: '1px solid var(--line)', background: 'rgba(255,255,255,0.015)' }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${s.color}1f`, color: s.color }}><Icon name={s.icon} size={14} /></div>
+                <div className="text-[12.5px] flex-1">{s.label}</div>
+                <Icon name="arrow-up-right" size={14} style={{ color: 'var(--text-2)' }} />
+              </button>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function ChatBubble({ role, text }) {
+  const isSage = role === 'sage';
+  return (
+    <div className={`flex gap-2.5 ${isSage ? '' : 'flex-row-reverse'}`}>
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+           style={isSage ? { background: 'radial-gradient(circle at 30% 30%, #c4b5fd, #8b5cf6)', color: '#fff' } : { background: 'rgba(255,255,255,0.06)', color: 'var(--text-1)' }}>
+        <Icon name={isSage ? 'sparkles' : 'user'} size={13} />
+      </div>
+      <div className={`max-w-[78%] text-[13.5px] leading-relaxed px-3.5 py-2.5 rounded-2xl ${isSage ? 'rounded-tl-sm' : 'rounded-tr-sm'}`}
+           style={isSage ? { background: 'rgba(139,92,246,0.10)', color: 'var(--text-0)', border: '1px solid rgba(139,92,246,0.2)' } : { background: 'rgba(255,255,255,0.05)', color: 'var(--text-0)', border: '1px solid var(--line)' }}>
+        {text}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { DashboardView, FinancesView, FitnessView, LearningView, ArenaView });
+</script>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- APP SHELL                                                   -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<script type="text/babel">
+const { useState: useS, useEffect: useE, useReducer, useMemo: useM } = React;
+
+const INITIAL_STATE = {
+  user: { name: 'Joaco', handle: '@joaco', level: 12, xp: 1840, xpMax: 2400, streak: 23, todayIdx: 4,
+    weekActivity: [{ day: 'L', value: 0.85 }, { day: 'M', value: 0.55 }, { day: 'X', value: 0.92 }, { day: 'J', value: 0.6 }, { day: 'V', value: 0.78 }, { day: 'S', value: 0 }, { day: 'D', value: 0 }] },
+  finance: {
+    income: 6420, expenses: 3870, netWorth: 48320, savingsGoal: 2500,
+    categories: [{ name: 'Comida & Bebida', value: 540, budget: 600 }, { name: 'Transporte', value: 210, budget: 250 }, { name: 'Gym', value: 49, budget: 80 }],
+    transactions: [
+      { id: 1, label: 'Sueldo — Empresa', cat: 'Ingreso', date: '15 May', amount: 6420, icon: 'briefcase' },
+      { id: 2, label: 'Super — Día', cat: 'Comida', date: '14 May', amount: -84.20, icon: 'shopping-bag' },
+      { id: 3, label: 'CEDEARS', cat: 'Inversión', date: '12 May', amount: -800, icon: 'trending-up' },
+      { id: 4, label: 'Café — Bar', cat: 'Comida', date: '12 May', amount: -6.50, icon: 'coffee' },
+      { id: 5, label: 'Gym — Cuota', cat: 'Salud', date: '10 May', amount: -49, icon: 'dumbbell' },
+      { id: 6, label: 'Spotify', cat: 'Subs', date: '09 May', amount: -16.99, icon: 'music' },
+      { id: 7, label: 'Libro — Hábitos Atómicos', cat: 'Aprendizaje', date: '08 May', amount: -14.20, icon: 'book' },
+    ],
+    history: [{ m: 'Jun', in: 6200, out: 4100 }, { m: 'Jul', in: 6200, out: 3900 }, { m: 'Ago', in: 6300, out: 4200 }, { m: 'Sep', in: 6300, out: 4350 }, { m: 'Oct', in: 6420, out: 4100 }, { m: 'Nov', in: 6420, out: 4500 }, { m: 'Dic', in: 7200, out: 5200 }, { m: 'Ene', in: 6420, out: 4000 }, { m: 'Feb', in: 6420, out: 3850 }, { m: 'Mar', in: 6420, out: 4150 }, { m: 'Abr', in: 6420, out: 3970 }, { m: 'May', in: 6420, out: 3870 }],
+  },
+  fitness: {
+    weight: 72.4, calories: 1840, steps: 8420, vo2: 48.6,
+    prs: [{ lift: 'Sentadilla', value: 142, unit: 'kg', target: 150, color: '#8b5cf6', icon: 'arrow-big-down-dash', tier: 'IV' }, { lift: 'Press Banca', value: 102, unit: 'kg', target: 110, color: '#f97316', icon: 'arrow-down-up', tier: 'III' }, { lift: 'Peso Muerto', value: 180, unit: 'kg', target: 200, color: '#34d399', icon: 'arrow-up', tier: 'IV' }],
+    cardio: { run: { km: 42.3, pace: '5:08', history: [3,2,4,3,5,4,6,5,4,7,6,5,8,6] }, bike: { km: 86.5, avg: 28.2, history: [10,8,12,9,15,11,14,18,16,12,17] }, swim: { m: 4200, pace: '1:58', history: [200,250,300,350,400,420,500,480,520,600,700] } },
+  },
+  learning: {
+    skills: [
+      { id: 'vc', name: 'Vibe Coding', path: 'Next.js · Supabase · IA integrations', level: 4, xp: 320, xpMax: 500, color: '#f97316', icon: 'brain-circuit',
+        tasks: [{ id: 1, label: 'Implementar nueva feature del dashboard', sub: '~2h', xp: 30, done: false }, { id: 2, label: 'Revisar PR y hacer code review', sub: 'detalles en Notion', xp: 50, done: true }, { id: 3, label: 'Documentar cambios en CLAUDE.md', sub: '300 palabras', xp: 20, done: false }] },
+      { id: 'en', name: 'Inglés', path: 'Fluidez conversacional · 90 días', level: 7, xp: 410, xpMax: 600, color: '#fbbf24', icon: 'languages',
+        tasks: [{ id: 1, label: 'Anki — 40 tarjetas', sub: '~10 min', xp: 15, done: true }, { id: 2, label: 'Clase de conversación', sub: '45 min @ 18:00', xp: 60, done: false }, { id: 3, label: 'Leer artículo técnico', sub: 'HackerNews', xp: 25, done: false }] },
+    ],
+    library: [
+      { id: 1, kind: 'Libro', title: 'Hábitos Atómicos', author: 'James Clear', progress: 62, left: '~2h restantes' },
+      { id: 2, kind: 'Curso', title: 'Next.js 15 Masterclass', author: 'Udemy', progress: 38, left: '4 módulos' },
+      { id: 3, kind: 'Paper', title: 'Attention Is All You Need', author: 'Vaswani et al., 2017', progress: 85, left: '14m restantes' },
+      { id: 4, kind: 'Podcast', title: 'Lex Fridman Podcast', author: 'Ep. 420 · Sam Altman', progress: 24, left: '52m restantes' },
+    ],
+    mastered: [
+      { name: 'SQL — Window functions', kind: 'Habilidad', when: 'hace 3 semanas', xp: 120 },
+      { name: 'React Server Components', kind: 'Curso', when: 'el mes pasado', xp: 220 },
+      { name: 'Maratón — 4:12:08', kind: 'Logro', when: 'hace 2 meses', xp: 500 },
+    ],
+  },
+  quests: {
+    daily: [
+      { id: 1, label: 'Tomar 3L de agua', sub: 'Hoy · 1.8L registrado', xp: 10, done: false },
+      { id: 2, label: 'Meditación 20 min', sub: 'mañana', xp: 15, done: true },
+      { id: 3, label: 'Revisar notas de ayer', sub: 'repaso espaciado', xp: 20, done: false },
+      { id: 4, label: 'Caminar 8.000 pasos', sub: '8.420 / 8.000', xp: 15, done: true },
+    ],
+    weekly: [
+      { id: 1, label: 'Completar 4 sesiones de gym', sub: '3 / 4 · quedan 2 días', xp: 150, done: false },
+      { id: 2, label: 'Gastar < $600 en comida', sub: '$540 gastado', xp: 100, done: false },
+      { id: 3, label: 'Terminar feature del dashboard', sub: 'entrega domingo', xp: 200, done: false },
+    ],
+    epic: [
+      { id: 1, label: 'Sentadilla 150kg para el 1 de Julio', sub: 'actualmente 142kg · 53d restantes', xp: 800, done: false },
+      { id: 2, label: 'Ahorrar $5.000 a fin de Q2', sub: '$2.550 en la bóveda', xp: 1200, done: false },
+      { id: 3, label: 'Lanzar side project v1', sub: 'desarrollopersonal.app', xp: 1500, done: false },
+    ],
+  },
+  aiQuest: {
+    title: 'Leer 25 minutos antes de abrir el feed',
+    body: 'El día premia a quienes dominan su primera hora. Saltá el scroll, abrí tu Codex y bloqueá un sprint de concentración. Sage cree que podés hacer 25 minutos seguidos.',
+  },
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'addXP': {
+      let xp = state.user.xp + action.amount, level = state.user.level, xpMax = state.user.xpMax;
+      while (xp >= xpMax) { xp -= xpMax; level += 1; xpMax = Math.round(xpMax * 1.08); }
+      return { ...state, user: { ...state.user, xp, level, xpMax } };
+    }
+    case 'toggleQuest': {
+      const list = state.quests[action.group].map((q) => q.id === action.id ? { ...q, done: !q.done } : q);
+      return { ...state, quests: { ...state.quests, [action.group]: list } };
+    }
+    case 'toggleLearningTask': {
+      const skills = state.learning.skills.map((s) => s.id !== action.skillId ? s : { ...s, tasks: s.tasks.map((t) => t.id === action.taskId ? { ...t, done: !t.done } : t) });
+      return { ...state, learning: { ...state.learning, skills } };
+    }
+    default: return state;
+  }
+}
+
+const NAV = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', accent: '#e7ecf3' },
+  { id: 'finances', label: 'Finanzas', icon: 'wallet', accent: '#34d399' },
+  { id: 'fitness', label: 'Fitness', icon: 'dumbbell', accent: '#8b5cf6' },
+  { id: 'learning', label: 'Aprendizaje', icon: 'book-open', accent: '#f97316' },
+  { id: 'arena', label: 'AI Arena', icon: 'sparkles', accent: '#38bdf8' },
+];
+
+function Sidebar({ view, setView, user, compact }) {
+  return (
+    <aside className="shrink-0 flex flex-col border-r hairline"
+           style={{ width: compact ? 76 : 232, background: 'rgba(7,9,15,0.55)', backdropFilter: 'blur(10px)' }}>
+      <div className="px-4 pt-5 pb-4 flex items-center gap-2.5">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fbbf24, #f97316)', color: '#0a0d14' }}>
+          <Icon name="mountain" size={18} strokeWidth={2.25} />
+        </div>
+        {!compact && <div><div className="text-[14px] font-bold display tracking-tight">Ascend</div><div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>Personal Dev OS</div></div>}
+      </div>
+      <nav className="flex-1 px-3 pt-4 space-y-1">
+        {!compact && <div className="text-[10px] num uppercase tracking-[0.2em] px-2 mb-2" style={{ color: 'var(--text-2)' }}>Reinos</div>}
+        {NAV.map((item) => {
+          const active = view === item.id;
+          return (
+            <button key={item.id} onClick={() => setView(item.id)}
+                    className={`nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium ${active ? 'active' : ''}`}
+                    style={{ color: active ? 'var(--text-0)' : 'var(--text-1)', '--nav-accent': item.accent, justifyContent: compact ? 'center' : 'flex-start' }}
+                    title={item.label}>
+              <Icon name={item.icon} size={16} style={{ color: active ? item.accent : 'inherit' }} />
+              {!compact && <span>{item.label}</span>}
+              {!compact && active && <span className="ml-auto text-[10px] num px-1.5 py-0.5 rounded-md" style={{ background: `${item.accent}1f`, color: item.accent }}>•</span>}
+            </button>
+          );
+        })}
+      </nav>
+      <div className="px-3 pb-4 mt-4">
+        {!compact ? (
+          <div className="rounded-2xl p-3 hairline border flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #312e81, #6d28d9)' }}>
+                <div className="w-full h-full flex items-center justify-center text-[14px] font-semibold display" style={{ color: '#e9d5ff' }}>JC</div>
+              </div>
+              <div className="absolute -bottom-1 -right-1"><div className="lvl-chip text-[9px] px-1.5 py-0.5 rounded-md" style={{ boxShadow: '0 0 10px rgba(251,191,36,0.5)' }}>LVL {user.level}</div></div>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[12.5px] font-semibold truncate">{user.name}</div>
+              <div className="text-[10.5px] num truncate" style={{ color: 'var(--text-2)' }}>{user.handle} · Ascendant</div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #312e81, #6d28d9)' }}>
+                <div className="w-full h-full flex items-center justify-center text-[13px] font-semibold" style={{ color: '#e9d5ff' }}>JC</div>
+              </div>
+              <div className="absolute -bottom-1 -right-1 lvl-chip text-[9px] px-1.5 py-0.5 rounded-md">{user.level}</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function Header({ user, view, onToggleSidebar }) {
+  const navItem = NAV.find((n) => n.id === view) || NAV[0];
+  return (
+    <header className="px-5 sm:px-7 pt-5 pb-4 border-b hairline sticky top-0 z-30"
+            style={{ background: 'rgba(7,9,15,0.7)', backdropFilter: 'blur(14px)' }}>
+      <div className="flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${navItem.accent}1f`, color: navItem.accent }}>
+            <Icon name={navItem.icon} size={15} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>Reino</div>
+            <div className="text-[14px] font-semibold display truncate">{navItem.label}</div>
+          </div>
+        </div>
+        <div className="flex-1 max-w-[560px] mx-auto">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-2">
+              <LevelBadge level={user.level} size={28} />
+              <span className="text-[11px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>Ascendant</span>
+            </div>
+            <div className="text-[11px] num" style={{ color: 'var(--text-1)' }}>
+              <span style={{ color: 'var(--text-0)' }}>{user.xp.toLocaleString()}</span> / {user.xpMax.toLocaleString()} XP · <span style={{ color: '#fbbf24' }}>{(user.xpMax - user.xp).toLocaleString()} al LVL {user.level+1}</span>
+            </div>
+          </div>
+          <XPBar value={user.xp} max={user.xpMax} height={8} animated />
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
+               style={{ background: 'linear-gradient(180deg, rgba(249,115,22,0.12), rgba(249,115,22,0.04))', border: '1px solid rgba(249,115,22,0.25)' }}>
+            <Icon name="flame" size={15} className="flame" style={{ color: '#f97316' }} />
+            <div className="leading-none">
+              <div className="num text-[14px] font-bold" style={{ color: '#fb923c' }}>{user.streak}</div>
+              <div className="text-[9px] num uppercase tracking-[0.18em]" style={{ color: 'var(--text-2)' }}>racha</div>
+            </div>
+          </div>
+          <button className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-white/[0.06]"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--line)' }}>
+            <Icon name="bell" size={15} />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ background: '#f97316', boxShadow: '0 0 8px #f97316' }} />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function App() {
+  const [view, setView] = useS('dashboard');
+  const [compact, setCompact] = useS(false);
+  const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const { show: showToast, Toast } = useToast();
+
+  useE(() => {
+    window.__grantXP = (n) => {
+      dispatch({ type: 'addXP', amount: n });
+      showToast({ title: `+${n} XP`, sub: 'Granted by the gods', icon: 'sparkles', color: '#fbbf24' });
+    };
+  }, []);
+
+  const ViewComponent = { dashboard: DashboardView, finances: FinancesView, fitness: FitnessView, learning: LearningView, arena: ArenaView }[view];
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar view={view} setView={setView} user={state.user} compact={compact} />
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <Header user={state.user} view={view} />
+        <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-6">
+          <ViewComponent state={state} dispatch={dispatch} toast={showToast} />
+        </div>
+      </main>
+      <Toast />
+      {/* Toggle sidebar width */}
+      <button onClick={() => setCompact(c => !c)}
+              className="fixed bottom-6 left-6 z-50 w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--line)' }}
+              title="Toggle sidebar">
+        <Icon name={compact ? 'panel-left-open' : 'panel-left-close'} size={15} style={{ color: 'var(--text-2)' }} />
+      </button>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+
+<script>
+  const reLucide = () => { try { window.lucide && window.lucide.createIcons(); } catch (e) {} };
+  const mo = new MutationObserver(() => requestAnimationFrame(reLucide));
+  mo.observe(document.body, { childList: true, subtree: true });
+  window.addEventListener('load', reLucide);
+</script>
+</body>
+</html>

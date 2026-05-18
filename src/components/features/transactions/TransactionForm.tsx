@@ -4,10 +4,14 @@ import { useState } from 'react'
 import { X, Plus, DollarSign, Check, Tag } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toISODate } from '@/lib/utils/formatters'
-import type { Category, CreateTransactionInput, CreateCategoryInput, TransactionType } from '@/types/database.types'
+import { formatCurrency } from '@/lib/utils/formatters'
+import type { Category, CreateTransactionInput, CreateCategoryInput, TransactionType, Wallet } from '@/types/database.types'
 
 interface TransactionFormProps {
   categories: Category[]
+  wallets?: Wallet[]
+  defaultWalletId?: string | null
+  exchangeRate?: number | null
   onSubmit: (input: CreateTransactionInput) => Promise<void>
   onClose: () => void
   onCreateCategory: (input: CreateCategoryInput) => Promise<Category>
@@ -17,16 +21,10 @@ interface FormState {
   type: TransactionType
   amount: string
   category_id: string
+  wallet_id: string
+  currency: 'ARS' | 'USD'
   description: string
   transaction_date: string
-}
-
-const INITIAL: FormState = {
-  type: 'expense',
-  amount: '',
-  category_id: '',
-  description: '',
-  transaction_date: toISODate(),
 }
 
 const COLOR_PALETTE = [
@@ -46,8 +44,16 @@ function filterAmountChars(value: string): string {
   return value.replace(/[^\d.,]/g, '')
 }
 
-export function TransactionForm({ categories, onSubmit, onClose, onCreateCategory }: TransactionFormProps) {
-  const [form, setForm] = useState<FormState>(INITIAL)
+export function TransactionForm({ categories, wallets = [], defaultWalletId, exchangeRate, onSubmit, onClose, onCreateCategory }: TransactionFormProps) {
+  const [form, setForm] = useState<FormState>({
+    type: 'expense',
+    amount: '',
+    category_id: '',
+    wallet_id: defaultWalletId ?? wallets.find(w => w.is_default)?.id ?? '',
+    currency: 'ARS',
+    description: '',
+    transaction_date: toISODate(),
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,6 +82,9 @@ export function TransactionForm({ categories, onSubmit, onClose, onCreateCategor
         type: form.type,
         amount,
         category_id: form.category_id || null,
+        wallet_id: form.wallet_id || null,
+        currency: form.currency,
+        exchange_rate: exchangeRate ?? null,
         description: form.description.trim() || null,
         transaction_date: form.transaction_date,
       })
@@ -151,11 +160,26 @@ export function TransactionForm({ categories, onSubmit, onClose, onCreateCategor
               ))}
             </div>
 
-            {/* Amount */}
+            {/* Amount + Currency */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                Monto
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Monto
+                </label>
+                {/* Currency toggle */}
+                <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                  {(['ARS', 'USD'] as const).map(c => (
+                    <button key={c} type="button" onClick={() => set('currency', c)}
+                      className="px-2.5 py-1 text-[10px] num font-semibold transition-colors"
+                      style={{
+                        background: form.currency === c ? 'rgba(255,255,255,0.1)' : 'transparent',
+                        color: form.currency === c ? '#fff' : '#6b7280',
+                      }}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="relative">
                 <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
                   <DollarSign
@@ -179,9 +203,26 @@ export function TransactionForm({ categories, onSubmit, onClose, onCreateCategor
                   )}
                 />
               </div>
-              <p className="mt-1.5 text-[11px] text-gray-600">
-                Usá punto para miles y coma para decimales — ej: <span className="text-gray-500">1.500,50</span>
-              </p>
+              {/* USD info row */}
+              {form.currency === 'USD' && (
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-[11px] text-gray-600">
+                    {exchangeRate
+                      ? `Cotización: 1 USD = $${new Intl.NumberFormat('es-AR').format(exchangeRate)} ARS`
+                      : 'Sin cotización cargada'}
+                  </p>
+                  {form.amount && exchangeRate && !isNaN(parseArgentineAmount(form.amount)) && (
+                    <p className="text-[11px] text-gray-400 num">
+                      = {formatCurrency(parseArgentineAmount(form.amount) * exchangeRate)}
+                    </p>
+                  )}
+                </div>
+              )}
+              {form.currency === 'ARS' && (
+                <p className="mt-1.5 text-[11px] text-gray-600">
+                  Usá punto para miles y coma para decimales — ej: <span className="text-gray-500">1.500,50</span>
+                </p>
+              )}
             </div>
 
             {/* Category */}
@@ -273,6 +314,33 @@ export function TransactionForm({ categories, onSubmit, onClose, onCreateCategor
                 </div>
               )}
             </div>
+
+            {/* Wallet */}
+            {wallets.length > 0 && (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                  Wallet
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {wallets.map(w => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => set('wallet_id', w.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+                      style={{
+                        background: form.wallet_id === w.id ? `${w.color}20` : 'rgba(255,255,255,0.04)',
+                        color: form.wallet_id === w.id ? w.color : '#6b7280',
+                        border: `1px solid ${form.wallet_id === w.id ? w.color + '40' : 'rgba(255,255,255,0.06)'}`,
+                      }}
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ background: w.color }} />
+                      {w.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             <div>

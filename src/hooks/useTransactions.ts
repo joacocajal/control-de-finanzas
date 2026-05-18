@@ -41,8 +41,13 @@ export function useTransactions(): UseTransactionsReturn {
     const optimistic: TransactionWithCategory = {
       id: tempId,
       user_id: '',
+      wallet_id: input.wallet_id ?? null,
       type: input.type,
       amount: input.amount,
+      currency: input.currency ?? 'ARS',
+      exchange_rate: input.exchange_rate ?? null,
+      amount_ars: input.amount,
+      amount_usd: null,
       category_id: input.category_id,
       description: input.description,
       transaction_date: input.transaction_date,

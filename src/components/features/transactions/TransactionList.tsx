@@ -27,12 +27,17 @@ function SkeletonRow({ delay }: { delay: string }) {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-800">
-        <Receipt size={22} className="text-gray-600" />
+      <div
+        className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
+        style={{ background: 'rgba(255,255,255,0.04)' }}
+      >
+        <Receipt size={22} style={{ color: 'var(--text-2)' }} />
       </div>
-      <p className="text-sm font-medium text-gray-400">Sin transacciones este mes</p>
-      <p className="mt-1 text-xs text-gray-600">
-        Hacé clic en <span className="text-indigo-400 font-medium">+ Nueva Transacción</span> para empezar
+      <p className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>Sin transacciones este mes</p>
+      <p className="mt-1 text-xs" style={{ color: 'var(--text-2)' }}>
+        Hacé clic en{' '}
+        <span style={{ color: 'var(--finance)' }} className="font-medium">+ Nueva Transacción</span>{' '}
+        para empezar
       </p>
     </div>
   )
@@ -40,15 +45,18 @@ function EmptyState() {
 
 export function TransactionList({ transactions, loading, onDelete }: TransactionListProps) {
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-gray-900 p-6 shadow-xl h-full flex flex-col">
+    <div className="glass p-5 h-full flex flex-col" style={{ borderRadius: 18 }}>
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-bold text-white">Transacciones Recientes</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Este mes</p>
+          <div className="text-[10px] num uppercase tracking-[0.18em] mb-0.5" style={{ color: 'var(--text-2)' }}>Ledger</div>
+          <h2 className="text-[15px] font-semibold display" style={{ color: 'var(--text-0)' }}>Transacciones Recientes</h2>
         </div>
         {!loading && transactions.length > 0 && (
-          <span className="rounded-full bg-gray-800 px-2.5 py-1 text-xs font-semibold text-gray-400">
+          <span
+            className="num text-[11px] px-2 py-1 rounded-md"
+            style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)', border: '1px solid var(--line)' }}
+          >
             {transactions.length}
           </span>
         )}
@@ -123,7 +131,7 @@ export function TransactionList({ transactions, loading, onDelete }: Transaction
                   </span>
                   <button
                     onClick={() => void onDelete(t.id)}
-                    className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-gray-700 hover:bg-rose-500/10 hover:text-rose-400 transition-all"
+                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 rounded-lg p-2 sm:p-1.5 text-gray-600 sm:text-gray-700 hover:bg-rose-500/10 hover:text-rose-400 transition-all"
                     aria-label="Eliminar transacción"
                   >
                     <Trash2 size={13} />

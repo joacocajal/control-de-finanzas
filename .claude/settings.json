@@ -4,7 +4,41 @@
       "Bash(npm install *)",
       "Bash(npm run *)",
       "Bash(npx tsc *)",
-      "Bash(vercel whoami *)"
+      "Bash(vercel whoami *)",
+      "Bash(vercel link *)",
+      "Bash(vercel --prod --yes)",
+      "Bash(npx vercel *)",
+      "Bash(NODE_TLS_REJECT_UNAUTHORIZED=0 npx vercel --prod)",
+      "Read(//c/Users/Joaquin/.claude/n8n-mcp/**)",
+      "Bash(curl -sk -H \"X-N8N-API-KEY: f2d46d31-ce20-43b7-b521-78427bd0f641\" \"https://jcbots.levelstudios.site/api/v1/workflows?limit=50\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f'{w[\\\\\"id\\\\\"]} | {w[\\\\\"name\\\\\"]} | active={w[\\\\\"active\\\\\"]}'\\) for w in data.get\\('data',[]\\)]\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\);r.data.forEach\\(w=>console.log\\(w.id,'|',w.name,'| active='+w.active\\)\\)}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\);console.log\\(JSON.stringify\\(Object.keys\\(r\\)\\)\\);\\(r.data||[]\\).forEach\\(w=>console.log\\(w.id,'|',w.name,'| active='+w.active\\)\\)}\\)\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\);console.log\\(r.message||JSON.stringify\\(r\\).slice\\(0,300\\)\\)}\\)\")",
+      "Bash(curl -sk \"https://jcbots.levelstudios.site/api/v1/workflows?limit=5\" -H \"X-N8N-API-KEY: f2d46d31-ce20-43b7-b521-78427bd0f641\" -H \"Accept: application/json\" -w \"\\\\nHTTP_STATUS:%{http_code}\")",
+      "Bash(curl -sk \"https://jcbots.levelstudios.site/api/v1/workflows?limit=50\" -H \"X-N8N-API-KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmUxMDhhZS1kYWI4LTRhZGItODJmZi0yYmQ5OTUxODMwMDciLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNDQ2YjlmMTQtY2RhZC00OGI3LTkzODctZWE3ZWU3N2ZkZDhlIiwiaWF0IjoxNzc2OTQ4OTYwfQ.JKMSlYyOX8BslxkEgFyCGz2HlA-1kjwjg4AF-WCjDkE\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\);\\(r.data||[]\\).forEach\\(w=>console.log\\(w.id,'|',w.name,'| active='+w.active\\)\\)}\\)\")",
+      "Bash(curl -sk \"https://jcbots.levelstudios.site/api/v1/workflows/k7pnqlQnomekV3oy\" -H \"X-N8N-API-KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmUxMDhhZS1kYWI4LTRhZGItODJmZi0yYmQ5OTUxODMwMDciLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNDQ2YjlmMTQtY2RhZC00OGI3LTkzODctZWE3ZWU3N2ZkZDhlIiwiaWF0IjoxNzc2OTQ4OTYwfQ.JKMSlYyOX8BslxkEgFyCGz2HlA-1kjwjg4AF-WCjDkE\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\);r.nodes.forEach\\(n=>console.log\\(n.name,'|',n.type,'| params:',JSON.stringify\\(n.parameters\\).slice\\(0,200\\)\\)\\)}\\)\")",
+      "Read(//tmp/**)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\);const n=r.nodes.find\\(x=>x.name==='Análisis Gemini'\\);console.log\\(JSON.stringify\\(n,null,2\\)\\)}\\)\")",
+      "Bash(node -e ' *)",
+      "Read(//c/Users/Joaquin/.claude/projects/c--Users-Joaquin-Desktop-control-de-finanzas/memory/**)",
+      "Read(//c/Users/Joaquin/.claude/**)",
+      "Bash(curl -s -X GET https://jcbots.levelstudios.site/api/v1/workflows/k7pnqlQnomekV3oy -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmUxMDhhZS1kYWI4LTRhZGItODJmZi0yYmQ5OTUxODMwMDciLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiOWM4NzRiNzAtZDFhZC00NGFkLWE3MzktYTQwZjdlYWY2MDY4IiwiaWF0IjoxNzc4OTQ3NzMwfQ.wwlGAcPpD8MH1YoHFSrdzZqC6ve_c2QgbxgAv28G9vY' -H 'Content-Type: application/json')",
+      "Bash(curl -s -X GET https://jcbots.levelstudios.site/api/v1/workflows/k7pnqlQnomekV3oy -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmUxMDhhZS1kYWI4LTRhZGItODJmZi0yYmQ5OTUxODMwMDciLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiOWM4NzRiNzAtZDFhZC00NGFkLWE3MzktYTQwZjdlYWY2MDY4IiwiaWF0IjoxNzc4OTQ3NzMwfQ.wwlGAcPpD8MH1YoHFSrdzZqC6ve_c2QgbxgAv28G9vY')",
+      "Bash(curl -v https://jcbots.levelstudios.site/api/v1/workflows/k7pnqlQnomekV3oy -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmUxMDhhZS1kYWI4LTRhZGItODJmZi0yYmQ5OTUxODMwMDciLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiOWM4NzRiNzAtZDFhZC00NGFkLWE3MzktYTQwZjdlYWY2MDY4IiwiaWF0IjoxNzc4OTQ3NzMwfQ.wwlGAcPpD8MH1YoHFSrdzZqC6ve_c2QgbxgAv28G9vY')",
+      "Bash(curl -sk --ssl-no-revoke https://jcbots.levelstudios.site/api/v1/workflows/k7pnqlQnomekV3oy -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmUxMDhhZS1kYWI4LTRhZGItODJmZi0yYmQ5OTUxODMwMDciLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiOWM4NzRiNzAtZDFhZC00NGFkLWE3MzktYTQwZjdlYWY2MDY4IiwiaWF0IjoxNzc4OTQ3NzMwfQ.wwlGAcPpD8MH1YoHFSrdzZqC6ve_c2QgbxgAv28G9vY')",
+      "Bash(curl -sk --ssl-no-revoke https://jcbots.levelstudios.site/api/v1/workflows/k7pnqlQnomekV3oy -H 'X-N8N-API-KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3MmUxMDhhZS1kYWI4LTRhZGItODJmZi0yYmQ5OTUxODMwMDciLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiOWM4NzRiNzAtZDFhZC00NGFkLWE3MzktYTQwZjdlYWY2MDY4IiwiaWF0IjoxNzc4OTQ3NzMwfQ.wwlGAcPpD8MH1YoHFSrdzZqC6ve_c2QgbxgAv28G9vY')",
+      "Bash(node \"C:/Users/Joaquin/n8n_update.js\")",
+      "WebFetch(domain:api.anthropic.com)",
+      "WebFetch(domain:019e3193-fe81-7b0e-83dc-18af8b7062df.claudeusercontent.com)",
+      "WebFetch(domain:claude.ai)",
+      "Bash(python3 -c \"import sys, json; lines = sys.stdin.read\\(\\).strip\\(\\).split\\('\\\\n'\\); [print\\(json.loads\\(l\\).get\\('role',''\\) + ': ' + str\\(json.loads\\(l\\).get\\('content',''\\)\\)[:500]\\) for l in lines[-20:] if l]\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Joaquin"
     ]
   }
 }

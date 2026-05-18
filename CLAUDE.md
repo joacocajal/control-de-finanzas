@@ -54,7 +54,7 @@
 - **Iconos:** Lucide React
 - **Gráficos:** Recharts
 - **DB + Auth:** Supabase
-- **IA:** Claude API (Anthropic)
+- **IA:** Gemini API (Google) — modelo `gemini-2.5-flash`
 - **Lenguaje:** TypeScript strict
 
 ## Tabla de Lookup
@@ -70,7 +70,16 @@
 | `src/services/ai.service.ts` | `docs/features/transactions.md` + `docs/API_DOCS.md` |
 | `src/components/features/transactions/**` | `docs/features/transactions.md` |
 | `src/components/features/charts/**` | `docs/features/transactions.md` |
-| `src/components/features/ai-chat/**` | `docs/features/transactions.md` |
+| `src/components/features/ai-chat/**` | `docs/features/ai-assistant.md` |
 | `src/components/layout/Sidebar.tsx` | `docs/02-architecture.md` |
+| `src/components/layout/MobileTopBar.tsx` | `docs/02-architecture.md` |
+| `src/components/layout/DashboardShell.tsx` | `docs/02-architecture.md` |
 | `src/lib/utils/**` | `docs/02-architecture.md` |
+| `src/lib/supabase/admin.ts` | `docs/03-security.md` |
+| `src/hooks/useGeminiChat.ts` | `docs/features/ai-assistant.md` |
+| `src/hooks/useAudioRecorder.ts` | `docs/features/ai-assistant.md` |
 | `src/hooks/**` | `docs/features/transactions.md` |
+| `src/app/api/summary/route.ts` | `docs/API_DOCS.md` + `docs/03-security.md` |
+| `src/types/gemini.types.ts` | `docs/features/ai-assistant.md` |
+| `index.html` | `docs/features/gamified-dashboard.md` |
+| `supabase/migrations/00002_*.sql` | `docs/features/gamified-dashboard.md` + `docs/DB_SCHEMA.md` |

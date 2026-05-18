@@ -19,7 +19,8 @@ Los endpoints protegidos verifican la sesión de Supabase en el Route Handler. S
 | Método | Ruta | Descripción | Auth |
 |--------|------|-------------|------|
 | GET | `/api/health` | Estado del servidor | NO |
-| POST | `/api/ai/chat` | Chat con asistente de IA | SI |
+| POST | `/api/ai/chat` | Chat multimodal con Coach IA (Gemini) | Supabase session |
+| GET | `/api/summary` | Resumen financiero del mes (para n8n) | Bearer API key |
 
 ---
 
@@ -42,7 +43,7 @@ Los endpoints protegidos verifican la sesión de Supabase en el Route Handler. S
 ```
 
 ### Stream (Chat IA)
-El endpoint `/api/ai/chat` devuelve un `ReadableStream` con el formato de streaming de la Anthropic API.
+El endpoint `/api/ai/chat` devuelve un `ReadableStream` plain-text (chunks de texto de Gemini SSE).
 
 ---
 
@@ -104,6 +105,46 @@ Envía un mensaje al asistente de IA de finanzas. El asistente tiene contexto de
 | 404 | Recurso no encontrado |
 | 429 | Rate limit excedido (Anthropic) |
 | 500 | Error interno del servidor |
+
+---
+
+### Resumen Financiero (para n8n)
+
+**`GET /api/summary`** — Autenticación via Bearer token (no requiere sesión Supabase)
+
+Devuelve el resumen financiero del mes actual. Diseñado para ser consumido por workflows externos como n8n.
+
+**Headers requeridos:**
+```
+Authorization: Bearer <SUMMARY_API_KEY>
+```
+
+**Variables de entorno requeridas:**
+- `SUMMARY_API_KEY` — clave secreta, generada manualmente (ej. `openssl rand -hex 32`)
+- `SUPABASE_SERVICE_ROLE_KEY` — service role key de Supabase (bypasses RLS)
+
+**Response 200:**
+```json
+{
+  "balance": 1500.00,
+  "totalIncome": 5000.00,
+  "totalExpenses": 3500.00,
+  "topCategories": [
+    { "name": "Comida", "amount": 1200.00, "percentage": 34 }
+  ],
+  "period": { "start": "2026-05-01", "end": "2026-05-31" },
+  "transactionCount": 23
+}
+```
+
+**Errores:**
+| Código | Descripción |
+|--------|-------------|
+| 401 | Token inválido o ausente |
+| 500 | `SUMMARY_API_KEY` o `SUPABASE_SERVICE_ROLE_KEY` no configurados |
+
+**Uso en n8n:**
+Ver `n8n-workflow.json` en la raíz del proyecto. El workflow llama este endpoint cada lunes a las 9am, analiza los datos con Gemini y envía un email HTML.
 
 ---
 

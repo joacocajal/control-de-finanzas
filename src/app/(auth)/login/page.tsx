@@ -20,7 +20,7 @@ export default function LoginPage() {
       password: passwordVal,
     })
     if (!authError) {
-      router.push('/dashboard')
+      router.push('/')
       router.refresh()
       return true
     }
@@ -36,7 +36,7 @@ export default function LoginPage() {
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (!authError) {
-      router.push('/dashboard')
+      router.push('/')
       router.refresh()
       return
     }
