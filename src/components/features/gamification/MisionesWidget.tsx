@@ -34,36 +34,41 @@ function MisionRow({
 
   return (
     <div className={cn(
-      'flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors',
+      'flex flex-col gap-2 px-4 py-3 rounded-xl border transition-colors',
       mision.estado === 'completada'
         ? 'bg-emerald-500/[0.04] border-emerald-500/10 opacity-70'
         : mision.estado === 'fallada'
         ? 'bg-rose-500/[0.04] border-rose-500/10 opacity-60'
         : 'bg-white/[0.02] border-white/[0.04] hover:bg-white/[0.04]'
     )}>
-      {ESTADO_ICON[mision.estado]}
+      {/* Línea 1: ícono + descripción */}
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 shrink-0">{ESTADO_ICON[mision.estado]}</div>
+        <p className={cn(
+          'text-sm leading-snug',
+          mision.estado === 'completada' ? 'line-through text-gray-600' : 'text-gray-200'
+        )}>
+          {mision.descripcion}
+        </p>
+      </div>
 
-      <p className={cn(
-        'flex-1 text-sm min-w-0',
-        mision.estado === 'completada' ? 'line-through text-gray-600' : 'text-gray-200'
-      )}>
-        {mision.descripcion}
-      </p>
-
-      <div className="flex items-center gap-2 shrink-0">
-        <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', cfg.color)}>
-          {cfg.label}
-        </span>
-        <span className="flex items-center gap-0.5 text-[11px] text-amber-400">
-          <Zap size={10} />
-          {mision.xp_recompensa}
-        </span>
+      {/* Línea 2: badge + xp + acciones */}
+      <div className="flex items-center justify-between pl-[22px]">
+        <div className="flex items-center gap-2">
+          <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border', cfg.color)}>
+            {cfg.label}
+          </span>
+          <span className="flex items-center gap-0.5 text-[11px] text-amber-400">
+            <Zap size={10} />
+            {mision.xp_recompensa} XP
+          </span>
+        </div>
         {isPending && (
-          <div className="flex items-center gap-1 ml-1">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => void onCompletar(mision.id)}
               disabled={isLoading}
-              className="text-xs text-indigo-400 hover:text-indigo-300 disabled:opacity-40 transition-colors"
+              className="text-xs text-indigo-400 hover:text-indigo-300 disabled:opacity-40 transition-colors px-2 py-0.5 rounded-lg hover:bg-indigo-500/10"
             >
               {isLoading ? '...' : 'Completar'}
             </button>
@@ -71,7 +76,7 @@ function MisionRow({
             <button
               onClick={() => void onFallar(mision.id)}
               disabled={isLoading}
-              className="text-xs text-rose-500 hover:text-rose-400 disabled:opacity-40 transition-colors"
+              className="text-xs text-rose-500 hover:text-rose-400 disabled:opacity-40 transition-colors px-2 py-0.5 rounded-lg hover:bg-rose-500/10"
             >
               Fallar
             </button>

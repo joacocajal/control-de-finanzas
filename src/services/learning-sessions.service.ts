@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { addXpToSkill } from '@/services/learning.service'
 import type {
   LearningSession,
   CreateLearningSessionInput,
@@ -42,7 +43,7 @@ export async function finishSession(
 
   const { data: session, error: fetchErr } = await supabase
     .from('learning_sessions')
-    .select('started_at')
+    .select('started_at, skill_id')
     .eq('id', id)
     .single()
   if (fetchErr) throw new Error(fetchErr.message)
@@ -64,7 +65,23 @@ export async function finishSession(
     .single()
 
   if (error) throw new Error(error.message)
+
+  const xpGained = Math.round(duration_minutes * (input.was_completed ? 1.5 : 1))
+  await addXpToSkill(session.skill_id as string, xpGained).catch(() => {})
+
   return data as LearningSession
+}
+
+export async function updateSession(
+  id: string,
+  input: { was_completed: boolean; notes?: string | null; skill_id?: string },
+): Promise<void> {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('learning_sessions')
+    .update({ was_completed: input.was_completed, notes: input.notes ?? null })
+    .eq('id', id)
+  if (error) throw new Error(error.message)
 }
 
 export async function getRecentSessions(skillId: string, limit = 10): Promise<LearningSession[]> {

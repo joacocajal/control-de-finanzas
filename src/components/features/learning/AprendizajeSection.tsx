@@ -473,9 +473,10 @@ export function AprendizajeSection({ onMutation }: { onMutation?: () => void }) 
     await eliminarSkill(skill.id)
   }
 
-  const handleSessionFinished = useCallback(async (durationMinutes: number) => {
+  const handleSessionFinished = useCallback(async (durationMinutes: number, wasCompleted: boolean) => {
     setShowTimer(false)
-    const msg = `🔥 +${durationMinutes}min en ${skillActiva?.nombre_habilidad ?? 'skill'}`
+    const xpGained = Math.round(durationMinutes * (wasCompleted ? 1.5 : 1))
+    const msg = `🔥 +${xpGained} XP · ${durationMinutes}min en ${skillActiva?.nombre_habilidad ?? 'skill'}`
     setToast(msg)
     setTimeout(() => setToast(null), 4000)
     if (skillActiva) await loadSessionStats(skillActiva.id)
@@ -754,7 +755,7 @@ export function AprendizajeSection({ onMutation }: { onMutation?: () => void }) 
           resources={resources}
           preselectedResourceId={timerResourceId}
           onClose={() => { setShowTimer(false); setTimerResourceId(null) }}
-          onFinished={(mins) => void handleSessionFinished(mins)}
+          onFinished={(mins, completed) => void handleSessionFinished(mins, completed)}
         />
       )}
 

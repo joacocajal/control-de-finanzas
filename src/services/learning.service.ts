@@ -69,6 +69,8 @@ export async function registrarHorasEstudio(
     .select()
     .single()
   if (error) throw new Error(error.message)
+  const xpGained = Math.round(input.horas_estudio * 60)
+  await addXpToSkill(input.skill_id, xpGained).catch(() => {})
   return data as AprendizajeLog
 }
 
@@ -111,4 +113,36 @@ export async function getTotalHorasSkill(skillId: string): Promise<number> {
     .eq('skill_id', skillId)
   if (error) throw new Error(error.message)
   return (data ?? []).reduce((acc, l) => acc + (l.horas_estudio as number), 0)
+}
+
+// ─── XP ───────────────────────────────────────────────────────
+
+function xpUmbral(nivel: number): number {
+  return Math.floor(100 * Math.pow(1.15, nivel - 1))
+}
+
+export async function addXpToSkill(skillId: string, xpToAdd: number): Promise<void> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('aprendizaje_skills')
+    .select('xp_skill, nivel_skill')
+    .eq('id', skillId)
+    .single()
+  if (error) throw new Error(error.message)
+
+  let xp = (data.xp_skill as number) + xpToAdd
+  let nivel = data.nivel_skill as number
+
+  let umbral = xpUmbral(nivel)
+  while (xp >= umbral) {
+    xp -= umbral
+    nivel++
+    umbral = xpUmbral(nivel)
+  }
+
+  const { error: updateError } = await supabase
+    .from('aprendizaje_skills')
+    .update({ xp_skill: xp, nivel_skill: nivel })
+    .eq('id', skillId)
+  if (updateError) throw new Error(updateError.message)
 }

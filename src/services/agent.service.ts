@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { AgentConversation, AgentMessage, AgentNotification } from '@/types/database.types'
+import type { AgentConversation, AgentMessage, AgentNotification, AgentActionsLog } from '@/types/database.types'
 
 // ─── Conversations ────────────────────────────────────────────
 
@@ -129,4 +129,29 @@ export async function markAllNotificationsRead(): Promise<void> {
     .update({ read_at: new Date().toISOString() })
     .is('read_at', null)
   if (error) throw new Error(error.message)
+}
+
+// ─── Actions Log ──────────────────────────────────────────────
+
+export async function getActionsLog(conversationId: string): Promise<AgentActionsLog[]> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('agent_actions_log')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('created_at')
+  if (error) throw new Error(error.message)
+  return (data ?? []) as AgentActionsLog[]
+}
+
+export async function revertAction(actionId: string): Promise<void> {
+  const res = await fetch('/api/agent/revert', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action_id: actionId }),
+  })
+  if (!res.ok) {
+    const json = await res.json() as { error?: string }
+    throw new Error(json.error ?? `Error ${res.status}`)
+  }
 }

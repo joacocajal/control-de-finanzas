@@ -1,9 +1,10 @@
 'use client'
 
-import { Menu, Bell, Mountain, Flame } from 'lucide-react'
+import { Menu, Mountain, Flame } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { LevelBadge, XPBar } from '@/components/ui/ascend'
 import { xpUmbral, xpPorcentaje } from '@/hooks/useGamification'
+import { NotificationBell } from './NotificationBell'
 import type { ProfileGamificado } from '@/types/database.types'
 
 const REALM_MAP: Record<string, { label: string; accent: string }> = {
@@ -12,7 +13,8 @@ const REALM_MAP: Record<string, { label: string; accent: string }> = {
   '/fitness': { label: 'Fitness', accent: '#8b5cf6' },
   '/aprendizaje': { label: 'Learning Hub', accent: '#f97316' },
   '/diario': { label: 'Diario', accent: '#818cf8' },
-  '/chat': { label: 'AI Agent Arena', accent: '#38bdf8' },
+  '/agente': { label: 'Agente', accent: '#818cf8' },
+  '/notificaciones': { label: 'Notificaciones', accent: '#818cf8' },
 }
 
 interface MobileTopBarProps {
@@ -146,22 +148,7 @@ export function MobileTopBar({ onMenuClick, profile }: MobileTopBarProps) {
             </div>
           </div>
 
-          {/* Notification bell */}
-          <button
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-white/[0.06]"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid var(--line)',
-              color: 'var(--text-1)',
-            }}
-            aria-label="Notificaciones"
-          >
-            <Bell size={15} />
-            <span
-              className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-              style={{ background: '#f97316', boxShadow: '0 0 8px #f97316' }}
-            />
-          </button>
+          <NotificationBell />
         </div>
       </div>
     </header>

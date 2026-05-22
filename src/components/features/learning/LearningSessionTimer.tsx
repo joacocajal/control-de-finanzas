@@ -320,26 +320,26 @@ interface LearningSessionTimerProps {
   resources: SkillResource[]
   preselectedResourceId?: string | null
   onClose: () => void
-  onFinished: (durationMinutes: number) => void
+  onFinished: (durationMinutes: number, wasCompleted: boolean) => void
 }
 
 export function LearningSessionTimer({ skill, resources, preselectedResourceId, onClose, onFinished }: LearningSessionTimerProps) {
   const { activeSession, elapsed, isRunning, start, pause, resume, finish, updateWhatStudied } = useLearningSession()
   const [selectedResourceId, setSelectedResourceId] = useState<string | null>(preselectedResourceId ?? null)
-  const [postSession, setPostSession] = useState<{ duration: number } | null>(null)
+  const [postSession, setPostSession] = useState<{ duration: number; sessionId: string } | null>(null)
 
   async function handleFinish() {
-    const result = await finish({ was_completed: false })
-    setPostSession({ duration: result.duration_minutes ?? 0 })
+    pause()
+    const durationMinutes = Math.max(1, Math.round(elapsed / 60))
+    const sessionId = (activeSession as { id: string } | null)?.id ?? ''
+    setPostSession({ duration: durationMinutes, sessionId })
   }
 
   async function handlePostSave(wasCompleted: boolean, notes: string) {
-    if (!activeSession && postSession) {
-      onFinished(postSession.duration)
-      return
+    if (postSession?.sessionId) {
+      await finish({ was_completed: wasCompleted, notes: notes || null })
     }
-    await finish({ was_completed: wasCompleted, notes: notes || null })
-    onFinished(postSession?.duration ?? 0)
+    onFinished(postSession?.duration ?? 0, wasCompleted)
   }
 
   return (

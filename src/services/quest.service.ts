@@ -53,13 +53,15 @@ export async function crearMision(input: CreateMisionInput): Promise<MisionDiari
   return data as MisionDiaria
 }
 
-// Cambia el estado de una misión.
-// El trigger on_mision_estado_changed en Postgres aplica/resta XP automáticamente.
+// Cambia el estado de una misión y aplica XP via RPC (no trigger).
 export async function actualizarEstadoMision(
   misionId: string,
   estado: Extract<MisionEstado, 'completada' | 'fallada'>,
 ): Promise<MisionDiaria> {
   const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autenticado')
+
   const { data, error } = await supabase
     .from('misiones_diarias')
     .update({ estado })
@@ -67,7 +69,26 @@ export async function actualizarEstadoMision(
     .select()
     .single()
   if (error) throw new Error(error.message)
-  return data as MisionDiaria
+
+  const mision = data as MisionDiaria
+
+  if (estado === 'completada') {
+    const { error: xpError } = await supabase.rpc('otorgar_xp', {
+      p_perfil_id: user.id,
+      p_categoria: 'finanzas',
+      p_xp_ganado: mision.xp_recompensa,
+    })
+    if (xpError) console.error('Error otorgando XP:', xpError.message)
+  } else {
+    const { error: xpError } = await supabase.rpc('restar_xp', {
+      p_perfil_id: user.id,
+      p_categoria: 'finanzas',
+      p_xp_perdido: mision.xp_penalizacion,
+    })
+    if (xpError) console.error('Error restando XP:', xpError.message)
+  }
+
+  return mision
 }
 
 export async function completarMision(misionId: string): Promise<MisionDiaria> {
