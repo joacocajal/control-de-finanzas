@@ -1,22 +1,12 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { MobileTopBar } from './MobileTopBar'
 import { FinanceProvider } from '@/contexts/FinanceContext'
 import { useGamification } from '@/hooks/useGamification'
 import { createClient } from '@/lib/supabase/client'
-
-const FloatingChat = dynamic(
-  () => import('@/components/features/ai-chat/FloatingChat').then((m) => ({ default: m.FloatingChat })),
-  { ssr: false, loading: () => null }
-)
-
-const AgentChat = dynamic(
-  () => import('@/components/features/ai-chat/AgentChat').then((m) => ({ default: m.AgentChat })),
-  { ssr: false, loading: () => null }
-)
+import { StrictModeGate } from './StrictModeGate'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -59,13 +49,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           />
           <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
             <div className="max-w-[1280px] mx-auto">
-              {children}
+              <StrictModeGate>
+                {children}
+              </StrictModeGate>
             </div>
           </main>
         </div>
 
-        <FloatingChat />
-        <AgentChat />
       </div>
     </FinanceProvider>
   )

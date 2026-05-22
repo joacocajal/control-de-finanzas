@@ -7,11 +7,12 @@ import {
   Wallet,
   Dumbbell,
   BookOpen,
-  Sparkles,
+  Bot,
   Mountain,
   X,
   LogOut,
   BookHeart,
+  Swords,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -22,7 +23,8 @@ const NAV = [
   { href: '/fitness', label: 'Fitness', Icon: Dumbbell, accent: '#8b5cf6', exact: false },
   { href: '/aprendizaje', label: 'Learning Hub', Icon: BookOpen, accent: '#f97316', exact: false },
   { href: '/diario', label: 'Diario', Icon: BookHeart, accent: '#818cf8', exact: false },
-  { href: '/chat', label: 'AI Agent Arena', Icon: Sparkles, accent: '#38bdf8', exact: false },
+  { href: '/agente', label: 'Agente', Icon: Bot, accent: '#818cf8', exact: false },
+  { href: '/progreso', label: 'Progreso', Icon: Swords, accent: '#fbbf24', exact: false },
 ]
 
 interface SidebarProps {
