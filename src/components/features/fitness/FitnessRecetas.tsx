@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { BookOpen, Plus, Trash2, ChevronDown, ChevronUp, X, Search, Loader2 } from 'lucide-react'
 import { useRecipes } from '@/hooks/useRecipes'
 import { useFoodSearch } from '@/hooks/useFoods'
-import type { RecipeWithIngredients, CreateRecipeInput } from '@/types/database.types'
+import { MEASUREMENT_UNITS, toGrams } from '@/lib/units'
+import type { RecipeWithIngredients, CreateRecipeInput, CreateRecipeIngredientInput } from '@/types/database.types'
 
 function MacroBadge({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -84,19 +85,43 @@ function RecipeCard({ recipe, onDelete, calcMacros }: {
   )
 }
 
-function NewRecipeForm({ onCreate, onCancel }: { onCreate: (input: CreateRecipeInput) => Promise<void>; onCancel: () => void }) {
+type LocalIngredient = {
+  food_id: string
+  food_name: string
+  grams: number
+  display_amount: string
+  display_unit: string
+}
+
+function NewRecipeForm({ onCreate, onCancel }: {
+  onCreate: (input: CreateRecipeInput, ingredients: Array<Omit<CreateRecipeIngredientInput, 'recipe_id'>>) => Promise<void>
+  onCancel: () => void
+}) {
   const { results, loading: searching, search } = useFoodSearch()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [servings, setServings] = useState('1')
-  const [ingredients, setIngredients] = useState<Array<{ food_id: string; food_name: string; grams: number }>>([])
-  const [grams, setGrams] = useState('100')
+  const [ingredients, setIngredients] = useState<LocalIngredient[]>([])
+  const [amount, setAmount] = useState('100')
+  const [unit, setUnit] = useState('g')
+  const [gramsPerUnit, setGramsPerUnit] = useState('50')
   const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+
+  const selectedUnitDef = MEASUREMENT_UNITS.find(u => u.label === unit)!
+  const computedGrams = toGrams(parseFloat(amount) || 0, unit, parseFloat(gramsPerUnit) || 1)
 
   const addIngredient = (foodId: string, foodName: string) => {
-    const g = parseFloat(grams)
-    if (isNaN(g) || g <= 0) return
-    setIngredients(prev => [...prev, { food_id: foodId, food_name: foodName, grams: g }])
+    const amt = parseFloat(amount)
+    if (isNaN(amt) || amt <= 0 || computedGrams <= 0) return
+    const displayUnit = unit === 'g' ? 'g' : selectedUnitDef.abbrev
+    setIngredients(prev => [...prev, {
+      food_id: foodId,
+      food_name: foodName,
+      grams: computedGrams,
+      display_amount: amount,
+      display_unit: displayUnit,
+    }])
   }
 
   const removeIngredient = (i: number) => setIngredients(prev => prev.filter((_, idx) => idx !== i))
@@ -105,9 +130,20 @@ function NewRecipeForm({ onCreate, onCancel }: { onCreate: (input: CreateRecipeI
     e.preventDefault()
     if (!name.trim()) return
     setSaving(true)
+    setFormError(null)
     try {
-      await onCreate({ name: name.trim(), description: description || null, servings: parseInt(servings, 10) || 1 })
+      await onCreate(
+        { name: name.trim(), description: description || null, servings: parseInt(servings, 10) || 1 },
+        ingredients.map(ing => ({
+          food_id: ing.food_id,
+          grams: ing.grams,
+          display_amount: ing.display_amount,
+          display_unit: ing.display_unit,
+        }))
+      )
       onCancel()
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Error al guardar la receta')
     } finally {
       setSaving(false)
     }
@@ -140,7 +176,10 @@ function NewRecipeForm({ onCreate, onCancel }: { onCreate: (input: CreateRecipeI
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--line)' }}>
               <span className="text-[12px]" style={{ color: 'var(--text-1)' }}>{ing.food_name}</span>
               <div className="flex items-center gap-2">
-                <span className="text-[12px] num" style={{ color: 'var(--text-2)' }}>{ing.grams}g</span>
+                <span className="text-[12px] num" style={{ color: 'var(--text-2)' }}>
+                  {ing.display_amount} {ing.display_unit}
+                  {ing.display_unit !== 'g' && ` (${Math.round(ing.grams)}g)`}
+                </span>
                 <button type="button" onClick={() => removeIngredient(i)}
                   className="w-5 h-5 flex items-center justify-center" style={{ color: 'var(--text-2)' }}>
                   <X size={11} />
@@ -153,17 +192,55 @@ function NewRecipeForm({ onCreate, onCancel }: { onCreate: (input: CreateRecipeI
 
       <div className="space-y-2">
         <div className="text-[11px] num uppercase tracking-[0.12em]" style={{ color: 'var(--text-2)' }}>Buscar ingrediente</div>
+
+        {/* Cantidad + búsqueda */}
         <div className="flex gap-2">
+          <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="cant."
+            className="w-16 bg-transparent border rounded-lg px-2 py-2 text-[13px] num text-center shrink-0"
+            style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
           <div className="relative flex-1">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-2)' }} />
             <input onChange={e => search(e.target.value)} placeholder="Buscar alimento..."
               className="w-full pl-8 pr-3 py-2 rounded-lg text-[13px]"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--line)', color: 'var(--text-0)', outline: 'none' }} />
           </div>
-          <input type="number" value={grams} onChange={e => setGrams(e.target.value)} placeholder="g"
-            className="w-20 bg-transparent border rounded-lg px-2 py-2 text-[13px] num text-center"
-            style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
         </div>
+
+        {/* Selector de unidad — pill buttons */}
+        <div className="flex gap-1.5 flex-wrap">
+          {MEASUREMENT_UNITS.map(u => (
+            <button key={u.label} type="button" onClick={() => setUnit(u.label)}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+              style={{
+                background: unit === u.label ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${unit === u.label ? 'rgba(52,211,153,0.4)' : 'var(--line)'}`,
+                color: unit === u.label ? '#34d399' : 'var(--text-2)',
+              }}>
+              {u.label}
+            </button>
+          ))}
+        </div>
+
+        {/* g/unidad — solo cuando unit = 'unidad' */}
+        {unit === 'unidad' && (
+          <div className="flex items-center gap-2 px-1">
+            <span className="text-[11px]" style={{ color: 'var(--text-2)' }}>Gramos por unidad:</span>
+            <input type="number" value={gramsPerUnit} onChange={e => setGramsPerUnit(e.target.value)} min={1}
+              className="w-20 bg-transparent border rounded-lg px-2 py-1 text-[12px] num text-center"
+              style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+            <span className="text-[11px] num" style={{ color: 'var(--text-2)' }}>
+              = {Math.round(computedGrams)}g total
+            </span>
+          </div>
+        )}
+
+        {/* Equivalencia en gramos cuando la unidad no es g/ml */}
+        {unit !== 'g' && unit !== 'ml' && unit !== 'unidad' && computedGrams > 0 && (
+          <div className="text-[11px] num px-1" style={{ color: 'var(--text-2)' }}>
+            ≈ {Math.round(computedGrams)}g
+          </div>
+        )}
+
         {searching && <div className="flex justify-center"><Loader2 size={16} className="animate-spin" style={{ color: 'var(--text-2)' }} /></div>}
         {!searching && results.length > 0 && (
           <div className="max-h-36 overflow-y-auto space-y-1">
@@ -178,6 +255,13 @@ function NewRecipeForm({ onCreate, onCancel }: { onCreate: (input: CreateRecipeI
           </div>
         )}
       </div>
+
+      {formError && (
+        <div className="text-[12px] px-3 py-2 rounded-lg"
+          style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}>
+          {formError}
+        </div>
+      )}
 
       <div className="flex gap-2 pt-1">
         <button type="submit" disabled={saving}
@@ -196,7 +280,7 @@ function NewRecipeForm({ onCreate, onCancel }: { onCreate: (input: CreateRecipeI
 }
 
 export function FitnessRecetas() {
-  const { recipes, loading, create, remove, calcMacros } = useRecipes()
+  const { recipes, loading, createWithIngredients, remove, calcMacros } = useRecipes()
   const [showForm, setShowForm] = useState(false)
 
   return (
@@ -219,7 +303,7 @@ export function FitnessRecetas() {
       </div>
 
       {showForm && (
-        <NewRecipeForm onCreate={create} onCancel={() => setShowForm(false)} />
+        <NewRecipeForm onCreate={createWithIngredients} onCancel={() => setShowForm(false)} />
       )}
 
       {loading ? (

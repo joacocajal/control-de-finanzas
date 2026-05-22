@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Plus, Trash2, ChevronDown, ChevronUp, X, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, Plus, Trash2, ChevronDown, ChevronUp, X, Loader2, BookOpen } from 'lucide-react'
 import { useFoodLogs } from '@/hooks/useFoodLogs'
 import { useFitnessGoals } from '@/hooks/useFitnessGoals'
 import { useFoodSearch } from '@/hooks/useFoods'
 import { calcMacros } from '@/services/foods.service'
-import type { Food, MealType, CreateFoodLogInput } from '@/types/database.types'
+import { getRecipes, calcRecipeMacros } from '@/services/recipes.service'
+import { MEASUREMENT_UNITS, toGrams } from '@/lib/units'
+import type { Food, MealType, CreateFoodLogInput, RecipeWithIngredients } from '@/types/database.types'
 
 const MEAL_LABELS: Record<MealType, string> = {
   desayuno: 'Desayuno',
@@ -35,21 +37,47 @@ function FoodSearchModal({ meal, onAdd, onClose }: {
   onAdd: (input: CreateFoodLogInput) => Promise<void>
   onClose: () => void
 }) {
+  const [mode, setMode] = useState<'food' | 'recipe'>('food')
+
+  // Food mode
   const { results, loading, search } = useFoodSearch()
   const [selected, setSelected] = useState<Food | null>(null)
-  const [grams, setGrams] = useState('100')
+  const [amount, setAmount] = useState('100')
+  const [unit, setUnit] = useState('g')
+  const [gramsPerUnit, setGramsPerUnit] = useState('50')
+
+  // Recipe mode
+  const [recipes, setRecipes] = useState<RecipeWithIngredients[]>([])
+  const [recipesLoading, setRecipesLoading] = useState(false)
+  const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithIngredients | null>(null)
+  const [servings, setServings] = useState('1')
+
   const [saving, setSaving] = useState(false)
 
-  const macros = selected ? calcMacros(selected, parseFloat(grams) || 0) : null
+  useEffect(() => {
+    if (mode === 'recipe' && recipes.length === 0) {
+      setRecipesLoading(true)
+      getRecipes()
+        .then(r => setRecipes(r))
+        .catch(() => {})
+        .finally(() => setRecipesLoading(false))
+    }
+  }, [mode, recipes.length])
 
-  const handleAdd = async () => {
+  const grams = toGrams(parseFloat(amount) || 0, unit, parseFloat(gramsPerUnit) || 1)
+  const macros = selected ? calcMacros(selected, grams) : null
+
+  const recipeMacros = selectedRecipe ? calcRecipeMacros(selectedRecipe) : null
+  const srv = Math.max(parseFloat(servings) || 1, 0.25)
+
+  const handleAddFood = async () => {
     if (!selected || !macros) return
     setSaving(true)
     try {
       await onAdd({
         meal_type: meal,
         food_id: selected.id,
-        grams: parseFloat(grams),
+        grams,
         calories: macros.calories,
         protein: macros.protein,
         carbs: macros.carbs,
@@ -61,7 +89,26 @@ function FoodSearchModal({ meal, onAdd, onClose }: {
     }
   }
 
-  const handleServingClick = (g: number) => setGrams(String(g))
+  const handleAddRecipe = async () => {
+    if (!selectedRecipe || !recipeMacros) return
+    setSaving(true)
+    try {
+      await onAdd({
+        meal_type: meal,
+        recipe_id: selectedRecipe.id,
+        servings: srv,
+        calories: Math.round(recipeMacros.perServing.calories * srv),
+        protein: Math.round(recipeMacros.perServing.protein * srv * 10) / 10,
+        carbs: Math.round(recipeMacros.perServing.carbs * srv * 10) / 10,
+        fat: Math.round(recipeMacros.perServing.fat * srv * 10) / 10,
+      })
+      onClose()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleServingClick = (g: number) => { setAmount(String(g)); setUnit('g') }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
@@ -75,101 +122,232 @@ function FoodSearchModal({ meal, onAdd, onClose }: {
           </button>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-2)' }} />
-          <input
-            type="text"
-            placeholder="Buscar alimento..."
-            onChange={e => search(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl text-[13px]"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--line)', color: 'var(--text-0)', outline: 'none' }}
-            autoFocus
-          />
+        {/* Mode tabs */}
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--line)' }}>
+          {([['food', 'Alimento'], ['recipe', 'Receta']] as const).map(([m, label]) => (
+            <button key={m} onClick={() => setMode(m)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-medium transition-all"
+              style={{
+                background: mode === m ? MEAL_COLORS[meal] + '22' : 'transparent',
+                border: mode === m ? `1px solid ${MEAL_COLORS[meal]}44` : '1px solid transparent',
+                color: mode === m ? MEAL_COLORS[meal] : 'var(--text-2)',
+              }}>
+              {m === 'recipe' && <BookOpen size={12} />}
+              {m === 'food' && <Search size={12} />}
+              {label}
+            </button>
+          ))}
         </div>
 
-        {/* Results */}
-        {loading && (
-          <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin" style={{ color: 'var(--text-2)' }} /></div>
-        )}
-
-        {!loading && results.length > 0 && !selected && (
-          <div className="max-h-48 overflow-y-auto space-y-1">
-            {results.map(food => (
-              <button key={food.id} onClick={() => setSelected(food)}
-                className="w-full text-left px-3 py-2.5 rounded-xl transition-colors"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--line)' }}>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-[13px] font-medium" style={{ color: 'var(--text-0)' }}>{food.name}</div>
-                    {food.brand && <div className="text-[11px]" style={{ color: 'var(--text-2)' }}>{food.brand}</div>}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[12px] num font-semibold" style={{ color: '#f97316' }}>{food.calories_per_100g} kcal</div>
-                    <div className="text-[10px] num" style={{ color: 'var(--text-2)' }}>por 100g</div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Selected food detail */}
-        {selected && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--line)' }}>
-              <div className="text-[13px] font-semibold" style={{ color: 'var(--text-0)' }}>{selected.name}</div>
-              <button onClick={() => setSelected(null)} className="text-[11px]" style={{ color: '#8b5cf6' }}>Cambiar</button>
+        {/* ── Food mode ── */}
+        {mode === 'food' && (
+          <>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-2)' }} />
+              <input
+                type="text"
+                placeholder="Buscar alimento..."
+                onChange={e => search(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl text-[13px]"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--line)', color: 'var(--text-0)', outline: 'none' }}
+                autoFocus
+              />
             </div>
 
-            {/* Serving options */}
-            {selected.serving_units.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                {selected.serving_units.map(su => (
-                  <button key={su.label} onClick={() => handleServingClick(su.grams)}
-                    className="px-2.5 py-1 rounded-lg text-[11px] transition-colors"
-                    style={{
-                      background: parseFloat(grams) === su.grams ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.05)',
-                      border: `1px solid ${parseFloat(grams) === su.grams ? 'rgba(139,92,246,0.4)' : 'var(--line)'}`,
-                      color: parseFloat(grams) === su.grams ? '#8b5cf6' : 'var(--text-1)',
-                    }}>
-                    {su.label}
+            {loading && (
+              <div className="flex justify-center py-4"><Loader2 size={18} className="animate-spin" style={{ color: 'var(--text-2)' }} /></div>
+            )}
+
+            {!loading && results.length > 0 && !selected && (
+              <div className="max-h-48 overflow-y-auto space-y-1">
+                {results.map(food => (
+                  <button key={food.id} onClick={() => setSelected(food)}
+                    className="w-full text-left px-3 py-2.5 rounded-xl transition-colors"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--line)' }}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="text-[13px] font-medium" style={{ color: 'var(--text-0)' }}>{food.name}</div>
+                        {food.brand && <div className="text-[11px]" style={{ color: 'var(--text-2)' }}>{food.brand}</div>}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[12px] num font-semibold" style={{ color: '#f97316' }}>{food.calories_per_100g} kcal</div>
+                        <div className="text-[10px] num" style={{ color: 'var(--text-2)' }}>por 100g</div>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
             )}
 
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="text-[11px] num" style={{ color: 'var(--text-2)' }}>Gramos</label>
-                <input type="number" value={grams} onChange={e => setGrams(e.target.value)}
-                  className="w-full bg-transparent border rounded-lg px-3 py-2 text-[14px] num mt-1"
-                  style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+            {selected && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--line)' }}>
+                  <div className="text-[13px] font-semibold" style={{ color: 'var(--text-0)' }}>{selected.name}</div>
+                  <button onClick={() => setSelected(null)} className="text-[11px]" style={{ color: '#8b5cf6' }}>Cambiar</button>
+                </div>
+
+                {selected.serving_units.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {selected.serving_units.map(su => (
+                      <button key={su.label} onClick={() => handleServingClick(su.grams)}
+                        className="px-2.5 py-1 rounded-lg text-[11px] transition-colors"
+                        style={{
+                          background: unit === 'g' && parseFloat(amount) === su.grams ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.05)',
+                          border: `1px solid ${unit === 'g' && parseFloat(amount) === su.grams ? 'rgba(139,92,246,0.4)' : 'var(--line)'}`,
+                          color: unit === 'g' && parseFloat(amount) === su.grams ? '#8b5cf6' : 'var(--text-1)',
+                        }}>
+                        {su.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <label className="text-[11px] num" style={{ color: 'var(--text-2)' }}>Cantidad</label>
+                    <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
+                      className="w-full bg-transparent border rounded-lg px-3 py-2 text-[14px] num mt-1"
+                      style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+                  </div>
+                  <div>
+                    <label className="text-[11px] num" style={{ color: 'var(--text-2)' }}>Unidad</label>
+                    <select value={unit} onChange={e => setUnit(e.target.value)}
+                      className="border rounded-lg px-2 py-2 text-[12px] mt-1 block"
+                      style={{ borderColor: 'var(--line)', color: 'var(--text-1)', outline: 'none', background: 'rgba(255,255,255,0.04)' }}>
+                      {MEASUREMENT_UNITS.map(u => (
+                        <option key={u.label} value={u.label} style={{ background: '#1a1a1a' }}>{u.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {unit === 'unidad' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px]" style={{ color: 'var(--text-2)' }}>Gramos por unidad:</span>
+                    <input type="number" value={gramsPerUnit} onChange={e => setGramsPerUnit(e.target.value)} min={1}
+                      className="w-20 bg-transparent border rounded-lg px-2 py-1.5 text-[12px] num text-center"
+                      style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+                  </div>
+                )}
+
+                {unit !== 'g' && unit !== 'ml' && grams > 0 && (
+                  <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>≈ {Math.round(grams)}g</div>
+                )}
+
+                {macros && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { label: 'Cal', value: macros.calories, color: '#f97316' },
+                      { label: 'Prot', value: macros.protein, color: '#8b5cf6' },
+                      { label: 'Carb', value: macros.carbs, color: '#fbbf24' },
+                      { label: 'Gras', value: macros.fat, color: '#f87171' },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} className="text-center p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                        <div className="text-[14px] font-bold num" style={{ color }}>{value}</div>
+                        <div className="text-[10px] num" style={{ color: 'var(--text-2)' }}>{label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button onClick={() => void handleAddFood()} disabled={saving || !macros || grams <= 0}
+                  className="w-full py-3 rounded-xl text-[14px] font-semibold transition-colors"
+                  style={{ background: MEAL_COLORS[meal], color: '#fff', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? 'Agregando...' : `Agregar a ${MEAL_LABELS[meal]}`}
+                </button>
               </div>
-              {macros && (
-                <div className="grid grid-cols-4 gap-2 flex-1">
+            )}
+          </>
+        )}
+
+        {/* ── Recipe mode ── */}
+        {mode === 'recipe' && (
+          <>
+            {recipesLoading && (
+              <div className="flex justify-center py-6"><Loader2 size={18} className="animate-spin" style={{ color: 'var(--text-2)' }} /></div>
+            )}
+
+            {!recipesLoading && recipes.length === 0 && (
+              <div className="text-center py-6 text-[13px]" style={{ color: 'var(--text-2)' }}>
+                No tenés recetas guardadas aún.
+              </div>
+            )}
+
+            {!recipesLoading && !selectedRecipe && recipes.length > 0 && (
+              <div className="max-h-56 overflow-y-auto space-y-1.5">
+                {recipes.map(r => {
+                  const m = calcRecipeMacros(r)
+                  return (
+                    <button key={r.id} onClick={() => setSelectedRecipe(r)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl transition-colors"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--line)' }}>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-[13px] font-medium" style={{ color: 'var(--text-0)' }}>{r.name}</div>
+                          <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>
+                            {r.servings} {r.servings === 1 ? 'porción' : 'porciones'} · {r.recipe_ingredients.length} ing.
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[12px] num font-semibold" style={{ color: '#f97316' }}>
+                            {Math.round(m.perServing.calories)} kcal
+                          </div>
+                          <div className="text-[10px] num" style={{ color: 'var(--text-2)' }}>por porción</div>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {selectedRecipe && recipeMacros && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--line)' }}>
+                  <div>
+                    <div className="text-[13px] font-semibold" style={{ color: 'var(--text-0)' }}>{selectedRecipe.name}</div>
+                    <div className="text-[11px] num" style={{ color: 'var(--text-2)' }}>
+                      {selectedRecipe.recipe_ingredients.length} ingredientes
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedRecipe(null)} className="text-[11px]" style={{ color: '#8b5cf6' }}>Cambiar</button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <label className="text-[12px]" style={{ color: 'var(--text-2)' }}>Porciones:</label>
+                  <input type="number" value={servings} onChange={e => setServings(e.target.value)}
+                    min={0.25} step={0.5}
+                    className="w-20 bg-transparent border rounded-lg px-3 py-2 text-[14px] num text-center"
+                    style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+                  <span className="text-[11px] num" style={{ color: 'var(--text-2)' }}>
+                    de {selectedRecipe.servings}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2">
                   {[
-                    { label: 'Cal', value: macros.calories, color: '#f97316' },
-                    { label: 'P', value: macros.protein, color: '#8b5cf6' },
-                    { label: 'C', value: macros.carbs, color: '#fbbf24' },
-                    { label: 'G', value: macros.fat, color: '#f87171' },
+                    { label: 'Cal', value: Math.round(recipeMacros.perServing.calories * srv), color: '#f97316' },
+                    { label: 'Prot', value: Math.round(recipeMacros.perServing.protein * srv * 10) / 10, color: '#8b5cf6' },
+                    { label: 'Carb', value: Math.round(recipeMacros.perServing.carbs * srv * 10) / 10, color: '#fbbf24' },
+                    { label: 'Gras', value: Math.round(recipeMacros.perServing.fat * srv * 10) / 10, color: '#f87171' },
                   ].map(({ label, value, color }) => (
-                    <div key={label} className="text-center">
-                      <div className="text-[13px] font-bold num" style={{ color }}>{value}</div>
+                    <div key={label} className="text-center p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                      <div className="text-[14px] font-bold num" style={{ color }}>{value}</div>
                       <div className="text-[10px] num" style={{ color: 'var(--text-2)' }}>{label}</div>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
 
-            <button onClick={() => void handleAdd()} disabled={saving || !macros}
-              className="w-full py-3 rounded-xl text-[14px] font-semibold transition-colors"
-              style={{ background: MEAL_COLORS[meal], color: '#fff', opacity: saving ? 0.7 : 1 }}>
-              {saving ? 'Agregando...' : `Agregar a ${MEAL_LABELS[meal]}`}
-            </button>
-          </div>
+                <button onClick={() => void handleAddRecipe()} disabled={saving}
+                  className="w-full py-3 rounded-xl text-[14px] font-semibold transition-colors"
+                  style={{ background: MEAL_COLORS[meal], color: '#fff', opacity: saving ? 0.7 : 1 }}>
+                  {saving ? 'Agregando...' : `Agregar a ${MEAL_LABELS[meal]}`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

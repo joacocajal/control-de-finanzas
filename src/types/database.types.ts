@@ -453,6 +453,22 @@ export interface AgentNotification {
   created_at: string
 }
 
+export interface AgentActionsLog {
+  id: string
+  user_id: string
+  conversation_id: string | null
+  message_id: string | null
+  action_type: 'insert' | 'update' | 'delete'
+  target_table: string
+  target_row_id: string | null
+  payload: Record<string, unknown>
+  previous_state: Record<string, unknown> | null
+  status: 'success' | 'reverted' | 'failed'
+  reasoning: string | null
+  source: string | null
+  created_at: string
+}
+
 // ─── Financial Goals ─────────────────────────────────────────
 
 export interface FinancialGoal {

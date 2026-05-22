@@ -75,6 +75,32 @@ export async function deleteRecipe(id: string): Promise<void> {
   if (error) throw new Error(error.message)
 }
 
+export async function createRecipeWithIngredients(
+  input: CreateRecipeInput,
+  ingredients: Array<Omit<CreateRecipeIngredientInput, 'recipe_id'>>
+): Promise<Recipe> {
+  const recipe = await createRecipe(input)
+  if (ingredients.length > 0) {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('recipe_ingredients')
+      .insert(
+        ingredients.map(ing => ({
+          recipe_id: recipe.id,
+          food_id: ing.food_id,
+          grams: ing.grams,
+          display_amount: ing.display_amount ?? null,
+          display_unit: ing.display_unit ?? null,
+        }))
+      )
+    if (error) {
+      await supabase.from('recipes').delete().eq('id', recipe.id)
+      throw new Error(error.message)
+    }
+  }
+  return recipe
+}
+
 export async function addIngredient(input: CreateRecipeIngredientInput) {
   const supabase = createClient()
   const { data, error } = await supabase

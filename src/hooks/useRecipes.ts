@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   getRecipes,
   createRecipe,
+  createRecipeWithIngredients,
   updateRecipe,
   deleteRecipe,
   addIngredient,
@@ -41,6 +42,14 @@ export function useRecipes() {
     await load()
   }, [load])
 
+  const createWithIngredients = useCallback(async (
+    input: CreateRecipeInput,
+    ingredients: Array<Omit<CreateRecipeIngredientInput, 'recipe_id'>>
+  ) => {
+    await createRecipeWithIngredients(input, ingredients)
+    await load()
+  }, [load])
+
   const update = useCallback(async (id: string, input: Partial<CreateRecipeInput>) => {
     await updateRecipe(id, input)
     await load()
@@ -63,7 +72,7 @@ export function useRecipes() {
 
   return {
     recipes, loading, error, reload: load,
-    create, update, remove,
+    create, createWithIngredients, update, remove,
     addIng, removeIng,
     calcMacros: calcRecipeMacros,
   }
