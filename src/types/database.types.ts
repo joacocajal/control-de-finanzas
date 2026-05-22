@@ -929,3 +929,79 @@ export interface CreatePresupuestoInput {
   fecha_inicio?: string
   fecha_fin?: string | null
 }
+
+// ─── Misiones diarias gamificadas ────────────────────────────
+
+export type MissionCategory = 'fisico' | 'mental' | 'hogar' | 'negocio' | 'custom'
+export type MissionDifficulty = 'facil' | 'medio' | 'dificil'
+export type MissionSource = 'ai' | 'user' | 'recurring'
+
+export interface DailyMission {
+  id: string
+  user_id: string
+  mission_date: string
+  title: string
+  description: string | null
+  category: MissionCategory
+  difficulty: MissionDifficulty
+  xp_reward: number
+  completed: boolean
+  completed_at: string | null
+  source: MissionSource
+  ai_reasoning: string | null
+  order_index: number
+  created_at: string
+}
+
+export interface RecurringMission {
+  id: string
+  user_id: string
+  title: string
+  description: string | null
+  category: MissionCategory
+  difficulty: MissionDifficulty
+  xp_reward: number
+  days_of_week: number[]
+  is_active: boolean
+  created_at: string
+}
+
+export interface UserProgression {
+  user_id: string
+  total_xp: number
+  current_level: number
+  current_streak: number
+  longest_streak: number
+  last_streak_date: string | null
+  total_missions_completed: number
+  strict_mode_enabled: boolean
+  strict_mode_pending_disable_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface UserAchievement {
+  id: string
+  user_id: string
+  achievement_key: string
+  unlocked_at: string
+}
+
+export interface CreateDailyMissionInput {
+  title: string
+  description?: string | null
+  category: MissionCategory
+  difficulty: MissionDifficulty
+  xp_reward?: number
+  source?: MissionSource
+  mission_date?: string
+}
+
+export interface CreateRecurringMissionInput {
+  title: string
+  description?: string | null
+  category: MissionCategory
+  difficulty: MissionDifficulty
+  xp_reward?: number
+  days_of_week?: number[]
+}

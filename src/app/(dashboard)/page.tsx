@@ -12,6 +12,7 @@ import {
   Sparkles, Flame, Wallet, Dumbbell, BookOpen,
   ChevronRight, Zap,
 } from 'lucide-react'
+import { DailyMissionsCard } from '@/components/dashboard/DailyMissionsCard'
 
 const DAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
@@ -210,6 +211,9 @@ export default function DashboardPage() {
         <h1 className="text-[20px] font-bold display tracking-tight" style={{ color: 'var(--text-0)' }}>Dashboard</h1>
         <p className="text-[13px] mt-0.5" style={{ color: 'var(--text-2)' }}>Tu centro de comando personal</p>
       </div>
+
+      {/* ── Misiones diarias ── */}
+      <DailyMissionsCard />
 
       {/* ── Top: Quest + Weekly ── */}
       <div className="grid grid-cols-1 lg:grid-cols-8 gap-4 mb-4">
