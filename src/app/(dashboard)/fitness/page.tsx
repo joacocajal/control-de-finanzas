@@ -6,16 +6,18 @@ import { FitnessResumen } from '@/components/features/fitness/FitnessResumen'
 import { FitnessAlimentacion } from '@/components/features/fitness/FitnessAlimentacion'
 import { FitnessRecetas } from '@/components/features/fitness/FitnessRecetas'
 import { FitnessRutinas } from '@/components/features/fitness/FitnessRutinas'
+import { MuscleMap } from '@/components/features/fitness/MuscleMap'
 import { FitnessPRsYObjetivos } from '@/components/features/fitness/FitnessPRsYObjetivos'
 import { FitnessHidratacion } from '@/components/features/fitness/FitnessHidratacion'
 
-type Tab = 'resumen' | 'alimentacion' | 'recetas' | 'rutinas' | 'prs' | 'hidratacion'
+type Tab = 'resumen' | 'alimentacion' | 'recetas' | 'rutinas' | 'mapa' | 'prs' | 'hidratacion'
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'resumen',      label: 'Resumen' },
   { id: 'alimentacion', label: 'Alimentación' },
   { id: 'recetas',      label: 'Recetas' },
   { id: 'rutinas',      label: 'Rutinas' },
+  { id: 'mapa',         label: 'Mapa muscular' },
   { id: 'prs',          label: 'PRs & Objetivos' },
   { id: 'hidratacion',  label: 'Hidratación' },
 ]
@@ -37,17 +39,17 @@ export default function FitnessPage() {
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 mb-5 overflow-x-auto pb-0.5 -mx-1 px-1">
+      {/* Tab bar — segmented control */}
+      <div className="flex gap-1 mb-5 overflow-x-auto pb-1 -mx-1 px-1 rounded-2xl">
         {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className="shrink-0 px-3.5 py-2 rounded-xl text-[12px] font-medium transition-all"
+            className="shrink-0 px-3.5 py-2 rounded-xl text-[12.5px] font-medium transition-all duration-200"
             style={{
-              background: tab === t.id ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${tab === t.id ? 'rgba(139,92,246,0.35)' : 'var(--line)'}`,
-              color: tab === t.id ? '#8b5cf6' : 'var(--text-2)',
+              background: tab === t.id ? 'rgba(139,92,246,0.16)' : 'transparent',
+              border: `1px solid ${tab === t.id ? 'rgba(139,92,246,0.4)' : 'transparent'}`,
+              color: tab === t.id ? '#a78bfa' : 'var(--text-2)',
             }}
           >
             {t.label}
@@ -60,6 +62,7 @@ export default function FitnessPage() {
       {tab === 'alimentacion' && <FitnessAlimentacion />}
       {tab === 'recetas'      && <FitnessRecetas />}
       {tab === 'rutinas'      && <FitnessRutinas />}
+      {tab === 'mapa'         && <MuscleMap />}
       {tab === 'prs'          && <FitnessPRsYObjetivos />}
       {tab === 'hidratacion'  && <FitnessHidratacion />}
     </>

@@ -305,9 +305,17 @@ export default function FinanzasPage() {
       {/* ── Budget categories + Transactions ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass p-5" style={{ borderRadius: 18 }}>
-          <div className="mb-4">
-            <div className="text-[10px] num uppercase tracking-[0.18em] mb-0.5" style={{ color: 'var(--text-2)' }}>Budget breakdown</div>
-            <h2 className="text-[15px] font-semibold display" style={{ color: 'var(--text-0)' }}>Budget categories</h2>
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div>
+              <div className="text-[10px] num uppercase tracking-[0.18em] mb-0.5" style={{ color: 'var(--text-2)' }}>Budget breakdown</div>
+              <h2 className="text-[15px] font-semibold display" style={{ color: 'var(--text-0)' }}>Budget categories</h2>
+            </div>
+            <Link href="/finanzas/categorias"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium shrink-0 transition-colors hover:bg-white/[0.06]"
+              style={{ background: 'rgba(52,211,153,0.1)', color: '#34d399', border: '1px solid rgba(52,211,153,0.25)' }}>
+              <LayoutGrid size={13} />
+              Gestionar
+            </Link>
           </div>
           {loading ? (
             <div className="space-y-3">

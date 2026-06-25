@@ -2,8 +2,6 @@
 
 import { Menu, Mountain, Flame } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { LevelBadge, XPBar } from '@/components/ui/ascend'
-import { xpUmbral, xpPorcentaje } from '@/hooks/useGamification'
 import { NotificationBell } from './NotificationBell'
 import type { ProfileGamificado } from '@/types/database.types'
 
@@ -11,6 +9,8 @@ const REALM_MAP: Record<string, { label: string; accent: string }> = {
   '/': { label: 'Dashboard', accent: '#e7ecf3' },
   '/finanzas': { label: 'Finances', accent: '#34d399' },
   '/fitness': { label: 'Fitness', accent: '#8b5cf6' },
+  '/focus': { label: 'Focus', accent: '#f43f5e' },
+  '/habitos': { label: 'Hábitos', accent: '#34d399' },
   '/aprendizaje': { label: 'Learning Hub', accent: '#f97316' },
   '/diario': { label: 'Diario', accent: '#818cf8' },
   '/agente': { label: 'Agente', accent: '#818cf8' },
@@ -29,17 +29,13 @@ export function MobileTopBar({ onMenuClick, profile }: MobileTopBarProps) {
     .sort((a, b) => b.length - a.length)[0] ?? '/'
   const realm = REALM_MAP[realmKey]
 
-  const nivel = profile?.nivel_global ?? 1
-  const xp = profile?.xp_global ?? 0
   const streak = profile?.racha_dias ?? 0
-  const umbral = xpUmbral(nivel)
-  const xpPct = xpPorcentaje(xp, nivel)
 
   return (
     <header
       className="sticky top-0 z-30 px-4 sm:px-6 lg:px-8 pt-3 pb-3"
       style={{
-        background: 'rgba(7,9,15,0.7)',
+        background: 'rgba(0,0,0,0.7)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
         borderBottom: '1px solid var(--line)',
@@ -95,39 +91,8 @@ export function MobileTopBar({ onMenuClick, profile }: MobileTopBarProps) {
           </div>
         </div>
 
-        {/* Desktop: XP bar (center) */}
-        <div className="hidden lg:block flex-1 max-w-[520px] mx-auto">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-2">
-              <LevelBadge level={nivel} size={28} />
-              <span
-                className="text-[11px] num uppercase tracking-[0.18em]"
-                style={{ color: 'var(--text-2)' }}
-              >
-                Ascendant
-              </span>
-            </div>
-            <div className="text-[11px] num" style={{ color: 'var(--text-1)' }}>
-              <span style={{ color: 'var(--text-0)' }}>{xp.toLocaleString()}</span>
-              {' / '}{umbral.toLocaleString()} XP
-              <span style={{ color: '#fbbf24' }}>
-                {' · '}{Math.max(0, umbral - xp).toLocaleString()} to LVL {nivel + 1}
-              </span>
-            </div>
-          </div>
-          <XPBar value={xp} max={umbral} height={8} animated />
-        </div>
-
         {/* Right cluster */}
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          {/* Mobile: compact level + XP */}
-          <div className="lg:hidden flex items-center gap-2">
-            <LevelBadge level={nivel} size={30} />
-            <div style={{ width: 60 }}>
-              <XPBar value={xpPct} max={100} height={5} animated={false} />
-            </div>
-          </div>
-
           {/* Streak indicator */}
           <div
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"

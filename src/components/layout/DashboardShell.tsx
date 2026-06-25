@@ -20,8 +20,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  const nivel = profile?.nivel_global ?? 1
-
   return (
     <FinanceProvider>
       <div className="min-h-screen" style={{ background: 'var(--bg-0)' }}>
@@ -29,7 +27,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <Sidebar
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          level={nivel}
           email={email}
         />
 

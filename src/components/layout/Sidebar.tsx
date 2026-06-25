@@ -13,6 +13,8 @@ import {
   LogOut,
   BookHeart,
   Swords,
+  CalendarCheck,
+  Target,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -21,6 +23,8 @@ const NAV = [
   { href: '/', label: 'Dashboard', Icon: LayoutDashboard, accent: '#e7ecf3', exact: true },
   { href: '/finanzas', label: 'Finances', Icon: Wallet, accent: '#34d399', exact: false },
   { href: '/fitness', label: 'Fitness', Icon: Dumbbell, accent: '#8b5cf6', exact: false },
+  { href: '/focus', label: 'Focus', Icon: Target, accent: '#f43f5e', exact: false },
+  { href: '/habitos', label: 'Hábitos', Icon: CalendarCheck, accent: '#34d399', exact: false },
   { href: '/aprendizaje', label: 'Learning Hub', Icon: BookOpen, accent: '#f97316', exact: false },
   { href: '/diario', label: 'Diario', Icon: BookHeart, accent: '#818cf8', exact: false },
   { href: '/agente', label: 'Agente', Icon: Bot, accent: '#818cf8', exact: false },
@@ -30,11 +34,10 @@ const NAV = [
 interface SidebarProps {
   open?: boolean
   onClose?: () => void
-  level?: number
   email?: string | null
 }
 
-export function Sidebar({ open = false, onClose, level = 1, email }: SidebarProps) {
+export function Sidebar({ open = false, onClose, email }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const initial = email?.[0]?.toUpperCase() ?? '?'
@@ -55,7 +58,7 @@ export function Sidebar({ open = false, onClose, level = 1, email }: SidebarProp
       )}
       style={{
         width: 232,
-        background: 'rgba(7,9,15,0.55)',
+        background: 'rgba(0,0,0,0.6)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         borderRight: '1px solid var(--line)',
@@ -142,14 +145,6 @@ export function Sidebar({ open = false, onClose, level = 1, email }: SidebarProp
               style={{ background: 'linear-gradient(135deg, #312e81, #6d28d9)', color: '#e9d5ff' }}
             >
               {initial}
-            </div>
-            <div className="absolute -bottom-1 -right-1">
-              <div
-                className="lvl-chip text-[9px] px-1.5 py-0.5 rounded-md"
-                style={{ boxShadow: '0 0 10px rgba(251,191,36,0.5)' }}
-              >
-                LVL {level}
-              </div>
             </div>
           </div>
           <div className="min-w-0 flex-1">

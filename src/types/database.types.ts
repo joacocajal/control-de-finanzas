@@ -680,6 +680,11 @@ export interface RoutineTemplateWithDays extends RoutineTemplate {
   days: RoutineTemplateDay[]
 }
 
+export interface SetTarget {
+  reps: number | null
+  weight: number | null
+}
+
 export interface RoutineExercise {
   id: string
   routine_id: string
@@ -687,6 +692,8 @@ export interface RoutineExercise {
   order_index: number
   target_sets: number | null
   target_reps: string | null
+  target_weight: number | null
+  sets_detail: SetTarget[] | null
   notes: string | null
 }
 
@@ -706,6 +713,8 @@ export interface CreateRoutineExerciseInput {
   order_index?: number
   target_sets?: number | null
   target_reps?: string | null
+  target_weight?: number | null
+  sets_detail?: SetTarget[] | null
   notes?: string | null
 }
 
@@ -1004,4 +1013,57 @@ export interface CreateRecurringMissionInput {
   difficulty: MissionDifficulty
   xp_reward?: number
   days_of_week?: number[]
+}
+
+// ─── Hábitos ──────────────────────────────────────────────────
+
+export interface Habit {
+  id: string
+  user_id: string
+  name: string
+  emoji: string
+  color: string
+  order_index: number
+  archived: boolean
+  created_at: string
+}
+
+export interface HabitLog {
+  id: string
+  habit_id: string
+  user_id: string
+  log_date: string
+  created_at: string
+}
+
+export interface CreateHabitInput {
+  name: string
+  emoji?: string
+  color?: string
+  order_index?: number
+}
+
+/** Hábito con el set de fechas (YYYY-MM-DD) en que fue cumplido. */
+export interface HabitWithLogs extends Habit {
+  done_dates: Set<string>
+}
+
+// ─── Focus ────────────────────────────────────────────────────
+
+export interface FocusSession {
+  id: string
+  user_id: string
+  label: string | null
+  started_at: string
+  ended_at: string | null
+  duration_seconds: number | null
+  created_at: string
+}
+
+export interface FocusStats {
+  totalSessions: number
+  totalSeconds: number
+  avgSeconds: number
+  todaySeconds: number
+  bestSeconds: number
 }

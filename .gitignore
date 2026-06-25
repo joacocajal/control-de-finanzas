@@ -42,3 +42,12 @@ Thumbs.db
 
 # Claude local settings
 .claude/settings.local.json
+
+.vercel
+
+# Scripts de debug n8n throwaway
+n8n_*.js
+.vercel_old_backup/
+
+# Script local con credenciales (NO commitear)
+scripts/run-migrations.mjs

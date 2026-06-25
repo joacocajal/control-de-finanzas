@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { Dumbbell, Play, Plus, X, Check, Trash2, Timer, Moon, Zap, Flame, History, LayoutTemplate } from 'lucide-react'
+import { Dumbbell, Play, Plus, Minus, X, Check, Trash2, Timer, Moon, Zap, Flame, History, LayoutTemplate, Pencil } from 'lucide-react'
 import { useWorkoutRoutines } from '@/hooks/useWorkoutRoutines'
 import { useWorkoutSession, useSessionHistory } from '@/hooks/useWorkoutSession'
 import { FitnessTemplates } from './FitnessTemplates'
+import { ALL_EXERCISES } from '@/constants/EXERCISES'
 import type {
   WorkoutRoutineWithExercises,
   WorkoutCategory,
@@ -13,6 +14,9 @@ import type {
   SessionFeeling,
   WorkoutSessionWithSets,
   PersonalRecord,
+  CreateRoutineExerciseInput,
+  RoutineExercise,
+  SetTarget,
 } from '@/types/database.types'
 
 const CATEGORY_COLORS: Record<WorkoutCategory, string> = {
@@ -31,6 +35,44 @@ const FEELING_OPTIONS: Array<{ value: SessionFeeling; emoji: string; label: stri
 
 const ENERGY_LABELS   = ['Sin energía', 'Poca', 'Normal', 'Buena', 'Máxima']
 const SORENESS_LABELS = ['Sin dolor', 'Mínimo', 'Leve', 'Moderado', 'Intenso', 'Muy intenso']
+
+// ─── Stepper (sin teclado: −/+ ) ──────────────────────────────
+
+function Stepper({ value, onChange, step = 1, min = 0, max, suffix = '', label, color = '#8b5cf6' }: {
+  value: number
+  onChange: (v: number) => void
+  step?: number
+  min?: number
+  max?: number
+  suffix?: string
+  label?: string
+  color?: string
+}) {
+  const round = (n: number) => Math.round(n * 100) / 100
+  const dec = () => onChange(round(Math.max(min, value - step)))
+  const inc = () => onChange(round(max !== undefined ? Math.min(max, value + step) : value + step))
+  return (
+    <div className="flex flex-col gap-1">
+      {label && <span className="text-[10px] num uppercase tracking-[0.12em] text-center" style={{ color: 'var(--text-2)' }}>{label}</span>}
+      <div className="flex items-center rounded-xl overflow-hidden select-none"
+        style={{ border: '1px solid var(--line)', background: 'rgba(255,255,255,0.02)' }}>
+        <button type="button" onClick={dec} aria-label="menos"
+          className="w-10 h-11 flex items-center justify-center shrink-0 transition-colors active:bg-white/[0.07]"
+          style={{ color: 'var(--text-1)' }}>
+          <Minus size={15} />
+        </button>
+        <span className="flex-1 text-center text-[16px] font-semibold num tabular-nums" style={{ color: 'var(--text-0)', minWidth: 40 }}>
+          {value}{suffix}
+        </span>
+        <button type="button" onClick={inc} aria-label="más"
+          className="w-10 h-11 flex items-center justify-center shrink-0 transition-colors active:bg-white/[0.07]"
+          style={{ color }}>
+          <Plus size={15} />
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // ─── New routine form ─────────────────────────────────────────
 
@@ -324,26 +366,49 @@ function ActiveSession({ routine, session, sets, onAddSet, onRemoveSet, onFinish
   onDiscard: () => void
 }) {
   const [activeEx, setActiveEx] = useState<string | null>(routine?.routine_exercises[0]?.exercise_name ?? null)
-  const [reps, setReps] = useState('')
-  const [weight, setWeight] = useState('')
+  const [reps, setReps] = useState(10)
+  const [weight, setWeight] = useState(0)
   const [saving, setSaving] = useState(false)
   const [finishing, setFinishing] = useState(false)
   const [showPostFeeling, setShowPostFeeling] = useState(false)
+  const [extraExercises, setExtraExercises] = useState<string[]>([])
+  const [newExName, setNewExName] = useState('')
 
-  const exercises = routine?.routine_exercises ?? []
+  // Routine exercises + ad-hoc ones added during the session
+  const exercises = [
+    ...(routine?.routine_exercises.map(e => ({ id: e.id, exercise_name: e.exercise_name })) ?? []),
+    ...extraExercises.map(name => ({ id: `extra-${name}`, exercise_name: name })),
+  ]
+
+  const addExtraExercise = () => {
+    const name = newExName.trim()
+    if (!name || exercises.some(e => e.exercise_name === name)) { setNewExName(''); return }
+    setExtraExercises(prev => [...prev, name])
+    setActiveEx(name)
+    setNewExName('')
+  }
   const setsForEx = (name: string) => sets.filter(s => s.exercise_name === name)
   const nextSetNum = (name: string) => setsForEx(name).length + 1
   const elapsed = Math.floor((Date.now() - new Date(session.started_at).getTime()) / 60000)
 
+  // Al elegir un ejercicio, prefijar reps/peso con su objetivo de la 1ª serie
+  useEffect(() => {
+    if (!activeEx) return
+    const rex = routine?.routine_exercises.find(e => e.exercise_name === activeEx)
+    const t = (rex ? exerciseSummary(rex) : [])[0]
+    if (t?.reps) setReps(t.reps)
+    if (t?.weight) setWeight(t.weight)
+  }, [activeEx, routine])
+
   const addSet = async () => {
-    if (!activeEx || !reps) return
+    if (!activeEx || reps <= 0) return
     setSaving(true)
     try {
       await onAddSet(activeEx, nextSetNum(activeEx), {
-        reps: parseInt(reps, 10),
-        weight_kg: weight ? parseFloat(weight) : undefined,
+        reps,
+        weight_kg: weight > 0 ? weight : undefined,
       })
-      setReps('')
+      // mantenemos reps/peso para la siguiente serie (suele repetirse)
     } finally {
       setSaving(false)
     }
@@ -396,35 +461,59 @@ function ActiveSession({ routine, session, sets, onAddSet, onRemoveSet, onFinish
       </div>
 
       {/* Exercise selector */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {exercises.map(ex => (
-          <button key={ex.id} onClick={() => setActiveEx(ex.exercise_name)}
-            className="shrink-0 px-3 py-2 rounded-xl text-[12px] font-medium transition-colors"
-            style={{
-              background: activeEx === ex.exercise_name ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${activeEx === ex.exercise_name ? 'rgba(139,92,246,0.4)' : 'var(--line)'}`,
-              color: activeEx === ex.exercise_name ? '#8b5cf6' : 'var(--text-2)',
-            }}>
-            {ex.exercise_name}
-            {setsForEx(ex.exercise_name).length > 0 && (
-              <span className="ml-1.5 text-[10px]" style={{ color: '#34d399' }}>
-                {setsForEx(ex.exercise_name).length}✓
-              </span>
-            )}
-          </button>
-        ))}
-        {exercises.length === 0 && (
-          <div className="text-[12px] px-3 py-2" style={{ color: 'var(--text-2)' }}>
-            Sin ejercicios — ingresá el nombre manualmente
+      <div className="space-y-2">
+        {exercises.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {exercises.map(ex => (
+              <button key={ex.id} onClick={() => setActiveEx(ex.exercise_name)}
+                className="shrink-0 px-3 py-2 rounded-xl text-[12px] font-medium transition-colors"
+                style={{
+                  background: activeEx === ex.exercise_name ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${activeEx === ex.exercise_name ? 'rgba(139,92,246,0.4)' : 'var(--line)'}`,
+                  color: activeEx === ex.exercise_name ? '#8b5cf6' : 'var(--text-2)',
+                }}>
+                {ex.exercise_name}
+                {setsForEx(ex.exercise_name).length > 0 && (
+                  <span className="ml-1.5 text-[10px]" style={{ color: '#34d399' }}>
+                    {setsForEx(ex.exercise_name).length}✓
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         )}
+        {/* Add an exercise on the fly */}
+        <div className="flex gap-1.5">
+          <input value={newExName} onChange={e => setNewExName(e.target.value)} list="exercise-library"
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addExtraExercise() } }}
+            placeholder={exercises.length === 0 ? 'Agregá un ejercicio para empezar' : 'Agregar otro ejercicio'}
+            className="flex-1 min-w-0 bg-transparent border rounded-xl px-3 py-2 text-[12.5px]"
+            style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+          <button onClick={addExtraExercise} disabled={!newExName.trim()}
+            className="w-10 shrink-0 rounded-xl flex items-center justify-center"
+            style={{ background: '#8b5cf6', color: '#fff', opacity: !newExName.trim() ? 0.5 : 1 }}>
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Set logger */}
-      {activeEx && (
+      {activeEx && (() => {
+        const routineEx = routine?.routine_exercises.find(e => e.exercise_name === activeEx)
+        const plan = routineEx ? exerciseSummary(routineEx) : []
+        const targetSet = plan[nextSetNum(activeEx) - 1] ?? null
+        return (
         <div className="glass p-4 space-y-4" style={{ borderRadius: 16 }}>
-          <div className="text-[13px] font-semibold" style={{ color: 'var(--text-0)' }}>
-            {activeEx} — Set {nextSetNum(activeEx)}
+          <div className="flex items-center justify-between">
+            <div className="text-[13px] font-semibold" style={{ color: 'var(--text-0)' }}>
+              {activeEx} — Set {nextSetNum(activeEx)}
+            </div>
+            {targetSet && (targetSet.reps || targetSet.weight) && (
+              <span className="text-[11px] num px-2 py-0.5 rounded-md tabular-nums"
+                style={{ background: 'rgba(139,92,246,0.12)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.25)' }}>
+                objetivo {targetSet.reps ?? '—'}{targetSet.weight ? ` × ${targetSet.weight}kg` : ''}
+              </span>
+            )}
           </div>
 
           {setsForEx(activeEx).length > 0 && (
@@ -446,29 +535,22 @@ function ActiveSession({ routine, session, sets, onAddSet, onRemoveSet, onFinish
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex items-end gap-2">
             <div className="flex-1">
-              <label className="text-[11px] num" style={{ color: 'var(--text-2)' }}>Peso (kg)</label>
-              <input type="number" value={weight} onChange={e => setWeight(e.target.value)} placeholder="0"
-                className="w-full bg-transparent border rounded-xl px-3 py-2.5 text-[14px] num mt-1"
-                style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+              <Stepper label="Reps" value={reps} onChange={setReps} step={1} color="#8b5cf6" />
             </div>
             <div className="flex-1">
-              <label className="text-[11px] num" style={{ color: 'var(--text-2)' }}>Reps</label>
-              <input type="number" value={reps} onChange={e => setReps(e.target.value)} placeholder="0"
-                className="w-full bg-transparent border rounded-xl px-3 py-2.5 text-[14px] num mt-1"
-                style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+              <Stepper label="Peso (kg)" value={weight} onChange={setWeight} step={2.5} color="#8b5cf6" />
             </div>
-            <div className="self-end">
-              <button onClick={() => void addSet()} disabled={saving || !reps}
-                className="h-[46px] w-[46px] rounded-xl flex items-center justify-center"
-                style={{ background: '#8b5cf6', color: '#fff', opacity: !reps ? 0.5 : 1 }}>
-                <Check size={18} />
-              </button>
-            </div>
+            <button onClick={() => void addSet()} disabled={saving || reps <= 0}
+              className="h-11 w-12 shrink-0 rounded-xl flex items-center justify-center transition-opacity"
+              style={{ background: '#8b5cf6', color: '#fff', opacity: reps <= 0 ? 0.5 : 1 }}>
+              <Check size={18} />
+            </button>
           </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
@@ -526,14 +608,156 @@ function SessionHistoryItem({ session }: { session: WorkoutSessionWithSets }) {
   )
 }
 
+// ─── Helpers: resumen de series de un ejercicio ───────────────
+
+function exerciseSummary(ex: RoutineExercise): SetTarget[] {
+  if (ex.sets_detail && ex.sets_detail.length > 0) return ex.sets_detail
+  const n = ex.target_sets ?? 0
+  if (n > 0) {
+    const reps = ex.target_reps ? parseInt(ex.target_reps, 10) : null
+    return Array.from({ length: n }, () => ({ reps: isNaN(reps as number) ? null : reps, weight: ex.target_weight }))
+  }
+  return []
+}
+
+function SetChip({ s }: { s: SetTarget }) {
+  return (
+    <span className="num text-[10.5px] px-1.5 py-0.5 rounded-md tabular-nums"
+      style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-1)', border: '1px solid var(--line)' }}>
+      {s.reps ?? '—'}{s.weight ? ` · ${s.weight}kg` : ''}
+    </span>
+  )
+}
+
+// ─── Exercise editor (inside a routine card) ──────────────────
+
+function ExerciseEditor({ routine, color, onAdd, onRemove }: {
+  routine: WorkoutRoutineWithExercises
+  color: string
+  onAdd: (input: CreateRoutineExerciseInput) => Promise<unknown>
+  onRemove: (id: string) => Promise<void>
+}) {
+  const [name, setName] = useState('')
+  const [rows, setRows] = useState<{ reps: number; weight: number }[]>([{ reps: 10, weight: 0 }])
+  const [saving, setSaving] = useState(false)
+
+  const setRow = (i: number, field: 'reps' | 'weight', val: number) =>
+    setRows(rs => rs.map((r, idx) => idx === i ? { ...r, [field]: val } : r))
+  const addRow = () => setRows(rs => [...rs, { ...(rs[rs.length - 1] ?? { reps: 10, weight: 0 }) }])
+  const removeRow = (i: number) => setRows(rs => rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs)
+
+  const reset = () => { setName(''); setRows([{ reps: 10, weight: 0 }]) }
+
+  const add = async () => {
+    if (!name.trim()) return
+    setSaving(true)
+    try {
+      const detail: SetTarget[] = rows.map(r => ({
+        reps: r.reps > 0 ? r.reps : null,
+        weight: r.weight > 0 ? r.weight : null,
+      }))
+      const weights = detail.map(s => s.weight).filter((w): w is number => w !== null)
+      await onAdd({
+        routine_id: routine.id,
+        exercise_name: name.trim(),
+        order_index: routine.routine_exercises.length,
+        target_sets: detail.length,
+        target_reps: detail[0]?.reps ? String(detail[0].reps) : null,
+        target_weight: weights.length ? Math.max(...weights) : null,
+        sets_detail: detail,
+      })
+      reset()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-3 pt-3 space-y-3" style={{ borderTop: '1px solid var(--line)' }}>
+      {/* Existing exercises */}
+      {routine.routine_exercises.length === 0 ? (
+        <div className="text-[12px] py-1" style={{ color: 'var(--text-2)' }}>
+          Todavía no hay ejercicios. Agregá el primero 👇
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {routine.routine_exercises.map(ex => {
+            const summary = exerciseSummary(ex)
+            return (
+              <div key={ex.id} className="py-2 px-3 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--line)' }}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[13px] font-medium truncate" style={{ color: 'var(--text-0)' }}>{ex.exercise_name}</span>
+                  <button onClick={() => void onRemove(ex.id)}
+                    className="w-7 h-7 -mr-1 flex items-center justify-center shrink-0 rounded-lg transition-colors hover:bg-white/[0.06]"
+                    style={{ color: 'var(--text-2)' }}>
+                    <X size={13} />
+                  </button>
+                </div>
+                {summary.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {summary.map((s, i) => <SetChip key={i} s={s} />)}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Add form */}
+      <div className="rounded-xl p-3 space-y-2.5" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--line)' }}>
+        <input value={name} onChange={e => setName(e.target.value)} list="exercise-library"
+          placeholder="Escribí o elegí un ejercicio"
+          className="w-full bg-transparent border rounded-lg px-3 py-2.5 text-[13px]"
+          style={{ borderColor: 'var(--line)', color: 'var(--text-0)', outline: 'none' }} />
+
+        {/* Per-set rows con steppers (sin teclado) */}
+        <div className="space-y-2">
+          {rows.map((r, i) => (
+            <div key={i} className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--line)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] num uppercase tracking-[0.14em]" style={{ color: 'var(--text-2)' }}>Serie {i + 1}</span>
+                <button onClick={() => removeRow(i)} disabled={rows.length <= 1}
+                  className="w-6 h-6 flex items-center justify-center rounded-lg transition-colors hover:bg-white/[0.06] disabled:opacity-20"
+                  style={{ color: 'var(--text-2)' }}>
+                  <X size={12} />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Stepper label="Reps" value={r.reps} onChange={v => setRow(i, 'reps', v)} step={1} color={color} />
+                <Stepper label="Peso (kg)" value={r.weight} onChange={v => setRow(i, 'weight', v)} step={2.5} color={color} />
+              </div>
+            </div>
+          ))}
+          <button onClick={addRow}
+            className="w-full flex items-center justify-center gap-1.5 text-[12px] font-medium py-2 rounded-xl transition-colors"
+            style={{ color, background: `${color}12`, border: `1px solid ${color}28` }}>
+            <Plus size={13} /> Agregar serie
+          </button>
+        </div>
+
+        <button onClick={() => void add()} disabled={saving || !name.trim()}
+          className="w-full py-3 rounded-xl text-[13px] font-semibold transition-opacity"
+          style={{ background: color, color: '#fff', opacity: !name.trim() ? 0.4 : 1 }}>
+          {saving ? 'Agregando...' : 'Agregar ejercicio'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Routine list card ────────────────────────────────────────
 
-function RoutineCard({ routine, onStart, onDelete }: {
+function RoutineCard({ routine, onStart, onDelete, onAddExercise, onRemoveExercise }: {
   routine: WorkoutRoutineWithExercises
   onStart: (r: WorkoutRoutineWithExercises) => void
   onDelete: (id: string) => Promise<void>
+  onAddExercise: (input: CreateRoutineExerciseInput) => Promise<unknown>
+  onRemoveExercise: (id: string) => Promise<void>
 }) {
   const color = CATEGORY_COLORS[routine.category]
+  const [editing, setEditing] = useState(routine.routine_exercises.length === 0)
 
   return (
     <div className="glass p-4" style={{ borderRadius: 16 }}>
@@ -551,6 +775,12 @@ function RoutineCard({ routine, onStart, onDelete }: {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-3">
+          <button onClick={() => setEditing(v => !v)}
+            className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ background: editing ? `${color}18` : 'transparent', color: editing ? color : 'var(--text-2)' }}
+            title="Editar ejercicios">
+            <Pencil size={13} />
+          </button>
           <button onClick={() => onStart(routine)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-colors"
             style={{ background: `${color}18`, color, border: `1px solid ${color}30` }}>
@@ -565,7 +795,7 @@ function RoutineCard({ routine, onStart, onDelete }: {
         </div>
       </div>
 
-      {routine.routine_exercises.length > 0 && (
+      {!editing && routine.routine_exercises.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {routine.routine_exercises.slice(0, 5).map(ex => (
             <span key={ex.id} className="px-2 py-0.5 rounded-md text-[11px]"
@@ -579,6 +809,10 @@ function RoutineCard({ routine, onStart, onDelete }: {
             </span>
           )}
         </div>
+      )}
+
+      {editing && (
+        <ExerciseEditor routine={routine} color={color} onAdd={onAddExercise} onRemove={onRemoveExercise} />
       )}
     </div>
   )
@@ -610,7 +844,7 @@ function PRToast({ prs, onDismiss }: { prs: PersonalRecord[]; onDismiss: () => v
 // ─── Main component ───────────────────────────────────────────
 
 export function FitnessRutinas() {
-  const { routines, loading, create, remove, reload: reloadRoutines } = useWorkoutRoutines()
+  const { routines, loading, create, remove, addEx, removeEx, reload: reloadRoutines } = useWorkoutRoutines()
   const { activeSession, sets, newPRs, start, addSet, removeSet, finish, discard } = useWorkoutSession()
   const { sessions: history, load: loadHistory } = useSessionHistory()
   const [showForm, setShowForm] = useState(false)
@@ -665,6 +899,11 @@ export function FitnessRutinas() {
 
   return (
     <>
+      {/* Lista compartida de ejercicios para autocompletar */}
+      <datalist id="exercise-library">
+        {ALL_EXERCISES.map(ex => <option key={ex} value={ex} />)}
+      </datalist>
+
       {newPRs.length > 0 && showPRs && (
         <PRToast prs={newPRs} onDismiss={() => setShowPRs(false)} />
       )}
@@ -742,7 +981,7 @@ export function FitnessRutinas() {
             />
           )}
 
-          {loading ? (
+          {loading && routines.length === 0 ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-2xl animate-shimmer" />)}
             </div>
@@ -753,7 +992,8 @@ export function FitnessRutinas() {
           ) : (
             <div className="space-y-3">
               {routines.map(r => (
-                <RoutineCard key={r.id} routine={r} onStart={handleInitiate} onDelete={remove} />
+                <RoutineCard key={r.id} routine={r} onStart={handleInitiate} onDelete={remove}
+                  onAddExercise={addEx} onRemoveExercise={removeEx} />
               ))}
             </div>
           )}

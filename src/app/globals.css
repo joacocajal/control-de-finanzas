@@ -8,11 +8,11 @@
 @layer base {
   :root {
     /* Shadcn HSL vars (kept for component compatibility) */
-    --background: 222 47% 4%;
+    --background: 0 0% 0%;
     --foreground: 210 40% 98%;
-    --card: 222 47% 6%;
+    --card: 0 0% 4%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 6%;
+    --popover: 0 0% 4%;
     --popover-foreground: 210 40% 98%;
     --primary: 142 70% 45%;
     --primary-foreground: 144 80% 10%;
@@ -30,12 +30,14 @@
     --radius: 0.75rem;
 
     /* Ascend design tokens */
-    --bg-0: #07090f;
-    --bg-1: #0b0f18;
-    --bg-2: #111726;
-    --line: rgba(255, 255, 255, 0.06);
-    --line-2: rgba(255, 255, 255, 0.1);
-    --text-0: #e7ecf3;
+    --bg-0: #000000;
+    --bg-1: #08080a;
+    --bg-2: #0e0e12;
+    --line: rgba(255, 255, 255, 0.07);
+    --line-2: rgba(255, 255, 255, 0.12);
+    --surface: rgba(255, 255, 255, 0.022);
+    --elev: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 12px 30px -16px rgba(0, 0, 0, 0.9);
+    --text-0: #f2f5f9;
     --text-1: #aab3c2;
     --text-2: #6c7588;
     --finance: #34d399;
@@ -61,8 +63,8 @@
   body {
     font-family: 'Space Grotesk', system-ui, sans-serif;
     background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(139, 92, 246, 0.08), transparent 60%),
-      radial-gradient(900px 600px at -10% 110%, rgba(52, 211, 153, 0.06), transparent 60%),
+      radial-gradient(1200px 600px at 80% -10%, rgba(139, 92, 246, 0.04), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(52, 211, 153, 0.03), transparent 60%),
       var(--bg-0);
     color: var(--text-0);
     -webkit-font-smoothing: antialiased;
@@ -148,12 +150,13 @@
 
   /* Glassmorphism */
   .glass {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01)),
-                rgba(13, 17, 28, 0.72);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008)),
+                rgba(8, 8, 10, 0.66);
+    backdrop-filter: blur(16px) saturate(1.1);
+    -webkit-backdrop-filter: blur(16px) saturate(1.1);
     border: 1px solid var(--line);
     border-radius: 18px;
+    box-shadow: var(--elev);
   }
   .glass:hover { border-color: var(--line-2); }
   .hairline { border-color: var(--line); }
